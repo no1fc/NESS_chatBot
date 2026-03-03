@@ -1,0 +1,392 @@
+/**
+ * 글로벌 CSS - 디자인 시스템 전체 정의
+ * Design_Guide.md를 기반으로 컬러 토큰, 타이포그래피, 컴포넌트 공통 스타일,
+ * 애니메이션을 정의합니다. 모든 컴포넌트는 이 파일의 변수를 활용합니다.
+ */
+
+
+@import "tailwindcss";
+
+
+/* ====================================
+   CSS 커스텀 변수 (디자인 토큰)
+==================================== */
+:root {
+  /* 브랜드 주요 컬러 */
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1D4ED8;
+  --color-primary-subtle: #EFF6FF;
+
+  /* 보조 컬러 */
+  --color-secondary: #10B981;
+  --color-secondary-light: #34D399;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* 중립 컬러 */
+  --color-gray-900: #111827;
+  --color-gray-700: #374151;
+  --color-gray-500: #6B7280;
+  --color-gray-300: #D1D5DB;
+  --color-gray-200: #E5E7EB;
+  --color-gray-100: #F3F4F6;
+  --color-white: #FFFFFF;
+
+  /* 폰트 */
+  --font-sans: 'Noto Sans KR', 'Inter', system-ui, -apple-system, Arial, sans-serif;
+
+  /* 그림자 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* 트랜지션 */
+  --transition-fast: all 0.15s ease;
+  --transition-base: all 0.25s ease;
+  --transition-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ====================================
+   기본 스타일 리셋
+==================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* 모바일 기기 폰트 확대 방지 */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-gray-900);
+  background: var(--color-gray-100);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ====================================
+   Tailwind 커스텀 컬러 테마 등록
+==================================== */
+@theme {
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1D4ED8;
+  --color-primary-subtle: #EFF6FF;
+  --color-secondary: #10B981;
+  --color-secondary-light: #34D399;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+}
+
+/* ====================================
+   애니메이션 키프레임 정의
+==================================== */
+/* AI 메시지 등장 (왼쪽에서 슬라이드-인) */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* 사용자 메시지 등장 (오른쪽에서 슬라이드-인) */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* 아래에서 위로 페이드-인 (결과 카드, CTA 등) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 스켈레톤 shimmer 효과 (로딩 UI) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 점 3개 로딩 애니메이션 */
+@keyframes dotBounce {
+
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* 회전 (스피너 로딩 아이콘) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 펄스 효과 (강조 표시) */
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ====================================
+   재사용 컴포넌트 스타일 (@layer components)
+==================================== */
+@layer components {
+
+  /* 챗봇 메시지 버블 - AI (왼쪽) */
+  .chat-bubble-ai {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-sm);
+    border-radius: 16px 16px 16px 4px;
+    padding: 12px 16px;
+    max-width: 75%;
+    animation: slideInLeft 0.25s ease-out;
+    line-height: 1.65;
+    font-size: 0.9375rem;
+    color: var(--color-gray-900);
+    white-space: pre-wrap;
+  }
+
+  /* 챗봇 메시지 버블 - 사용자 (오른쪽) */
+  .chat-bubble-user {
+    background: var(--color-primary);
+    color: white;
+    border-radius: 16px 16px 4px 16px;
+    padding: 12px 16px;
+    max-width: 75%;
+    animation: slideInRight 0.25s ease-out;
+    line-height: 1.65;
+    font-size: 0.9375rem;
+  }
+
+  /* 선택지 칩 버튼 */
+  .choice-chip {
+    width: 100%;
+    text-align: left;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 2px solid var(--color-gray-300);
+    background: var(--color-white);
+    color: var(--color-gray-700);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-sans);
+  }
+
+  .choice-chip:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+  }
+
+  .choice-chip:active:not(:disabled) {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .choice-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Primary CTA 버튼 */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  /* Secondary 버튼 (테두리형) */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background: white;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-primary-subtle);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.20);
+  }
+
+  /* 진단 결과 카드 */
+  .result-card {
+    background: white;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    animation: fadeInUp 0.4s ease-out;
+  }
+
+  /* 스켈레톤 로딩 UI */
+  .skeleton {
+    background: linear-gradient(90deg,
+        var(--color-gray-200) 25%,
+        var(--color-gray-100) 50%,
+        var(--color-gray-200) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+
+  /* 면책 문구 박스 */
+  .disclaimer-box {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #1E40AF;
+    font-size: 0.8125rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* 메시지 애니메이션 클래스 (isLatest인 경우만 적용) */
+  .animate-slide-in-left {
+    animation: slideInLeft 0.25s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.25s ease-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.35s ease-out;
+  }
+}
+
+/* ====================================
+   스크롤바 스타일 (Webkit 브라우저)
+==================================== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-500);
+}
+
+/* ====================================
+   포커스 접근성 (키보드 네비게이션)
+==================================== */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ====================================
+   반응형 유틸리티
+==================================== */
+/* 모바일 챗봇 전체 높이 고정 */
+.chat-page-height {
+  height: 100dvh;
+  /* dynamic viewport height for mobile */
+  height: 100vh;
+  /* fallback */
+}
