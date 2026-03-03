@@ -7,10 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateResponse, safeParseJSON } from '@/lib/gemini';
 import {
-    buildChatSystemPrompt,
     buildAnalysisPrompt,
     INTRO_MESSAGE,
     LOCATION_STEP_MESSAGE,
+    STATIC_QUESTIONS,
 } from '@/lib/prompts';
 import { getPDFContent } from '@/lib/pdf-parser';
 
@@ -33,6 +33,7 @@ interface ChatRequest {
     }>;
     phase: ChatPhase;
     userAnswers?: Record<string, string>;
+    currentStep?: number;
 }
 
 // API 응답 바디 타입 정의
@@ -42,9 +43,11 @@ interface ChatResponse {
     phase: ChatPhase;
     currentStep?: number;
     totalSteps?: number;
+    showIncomeTable?: boolean; // 중위소득 기준표 표시 여부
     result?: {
         type: string;
         score?: number | null;
+        scoreDetails?: string[];
         description: string;
         subType?: string | null;
         tips?: string[];
@@ -52,6 +55,7 @@ interface ChatResponse {
     };
     error?: string;
 }
+
 
 /**
  * POST 요청 핸들러
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
         // 요청 바디 파싱
         const body: ChatRequest = await request.json();
-        const { messages, phase, userAnswers = {} } = body;
+        const { messages, phase, userAnswers = {}, currentStep = 0 } = body;
 
         // 요청 유효성 검증
         if (!phase) {
@@ -114,6 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 result: {
                     type: analysisResult.type,
                     score: analysisResult.score,
+                    scoreDetails: analysisResult.scoreDetails,
                     description: analysisResult.description,
                     subType: analysisResult.subType,
                     tips: analysisResult.tips,
@@ -123,49 +128,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         // ==================== QUESTIONING 단계 ====================
-        // 다음 질문 생성
+        // 정적 질문 반환 (프론트엔드에서 넘겨준 currentStep 기준)
+        // currentStep은 질문 완료 후 반환하는 값이므로,
+        // 클라이언트에서 0을 보내면 0번 인덱스, 1을 보내면 1번 인덱스를 줍니다.
+        const questionIndex = currentStep;
 
-        // PDF 규정 문서 텍스트 로드 (캐시 활용)
-        const pdfContent = await getPDFContent();
-
-        // 시스템 프롬프트 생성
-        const systemPrompt = buildChatSystemPrompt(pdfContent);
-
-        // 대화 히스토리를 하나의 문자열로 변환
-        const historyText = messages
-            .map((m) => `${m.role === 'user' ? '사용자' : 'AI'}: ${m.content}`)
-            .join('\n');
-
-        // 수집된 답변 요약
-        const answersText = Object.keys(userAnswers).length > 0
-            ? `\n[현재까지 수집된 정보]\n${JSON.stringify(userAnswers, null, 2)}`
-            : '';
-
-        // Gemini API 호출 (다음 질문 생성)
-        const userMessage = `${historyText}${answersText}\n\n위 대화를 이어서 다음 질문을 JSON 형식으로 생성해주세요.`;
-
-        const rawResponse = await generateResponse(systemPrompt, userMessage, false);
-
-        // JSON 파싱
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const parsed = safeParseJSON<any>(rawResponse);
-
-        if (!parsed) {
-            // 파싱 실패 시 원시 텍스트로 응답
+        if (questionIndex >= STATIC_QUESTIONS.length) {
+            // 모든 정적 질문이 끝남. 프론트엔드가 analyzing 단계로 넘어가도록 유도
             return NextResponse.json({
-                message: rawResponse || 'AI가 응답을 생성하는 중 오류가 발생했습니다.',
-                phase: 'questioning',
+                message: '모든 질문이 완료되었습니다. 분석을 시작합니다...',
+                choices: [],
+                phase: 'questioning', // 아직 훅에서 triggerAnalysis를 통해 넘어갈 수 있도록
+                currentStep: questionIndex + 1,
+                totalSteps: STATIC_QUESTIONS.length,
+                showIncomeTable: false,
             } as ChatResponse);
         }
 
+        const nextQuestion = STATIC_QUESTIONS[questionIndex];
+
         // 정상 응답 반환
         return NextResponse.json({
-            message: parsed.message || '',
-            choices: parsed.choices || [],
-            phase: parsed.phase || 'questioning',
-            currentStep: parsed.currentStep || 1,
-            totalSteps: parsed.totalSteps || 5,
+            message: nextQuestion.message,
+            choices: nextQuestion.choices,
+            phase: 'questioning',
+            currentStep: questionIndex + 1,
+            totalSteps: STATIC_QUESTIONS.length,
+            showIncomeTable: nextQuestion.showIncomeTable,
         } as ChatResponse);
+
 
     } catch (error) {
         // 서버 오류 처리

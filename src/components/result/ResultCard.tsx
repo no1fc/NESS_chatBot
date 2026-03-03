@@ -112,18 +112,31 @@ export default function ResultCard({ result, onSelectRegion }: ResultCardProps) 
             {/* 구분선 */}
             <hr style={{ borderColor: 'var(--color-gray-200)', marginBottom: '16px' }} />
 
-            {/* 선발형 점수 표시 (해당 시만) */}
-            {result.type === '1유형_선발형' && result.score !== null && result.score !== undefined && (
+            {/* 점수 표시 (해당 시만) */}
+            {result.score !== null && result.score !== undefined && (
                 <div
-                    className="flex items-center justify-between rounded-xl p-3 mb-4"
+                    className="rounded-xl p-4 mb-4"
                     style={{ background: 'var(--color-primary-subtle)' }}
                 >
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-primary-dark)' }}>
-                        예상 선발형 점수
-                    </span>
-                    <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                        {result.score}점
-                    </span>
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-primary-dark)' }}>
+                            가구단위 합산 점수
+                        </span>
+                        <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
+                            {result.score}점
+                        </span>
+                    </div>
+                    {/* 세부 점수 표시 */}
+                    {result.scoreDetails && result.scoreDetails.length > 0 && (
+                        <div className="mt-3 pt-3" style={{ borderTop: '1px dashed var(--color-primary-dark)', opacity: 0.8 }}>
+                            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-primary-dark)' }}>항목별 세부 점수</p>
+                            <ul className="text-xs space-y-1" style={{ color: 'var(--color-primary-dark)' }}>
+                                {result.scoreDetails.map((detail, idx) => (
+                                    <li key={idx}>• {detail}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -141,8 +154,11 @@ export default function ResultCard({ result, onSelectRegion }: ResultCardProps) 
                     className="rounded-xl p-3 mb-4"
                     style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}
                 >
-                    <p className="text-sm font-medium" style={{ color: '#991B1B' }}>
+                    <p className="text-sm font-medium mb-2" style={{ color: '#991B1B' }}>
                         제한 사유: {result.restrictReason}
+                    </p>
+                    <p className="text-xs font-semibold" style={{ color: '#7F1D1D' }}>
+                        ※ 본 진단은 챗봇 자가진단 결과로 실제 요건과 다를 수 있습니다. 정확한 확인을 위해 관할 고용센터 또는 하단의 지역 지점으로 문의를 부탁드립니다.
                     </p>
                 </div>
             )}

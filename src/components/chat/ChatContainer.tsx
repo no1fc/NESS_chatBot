@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@/hooks/useChat';
 import ChatMessage from './ChatMessage';
 import ChoiceChips from './ChoiceChips';
+import IncomeTable from './IncomeTable';
 import LoadingIndicator from './LoadingIndicator';
 import ProgressBar from './ProgressBar';
 import RegionSelector from './RegionSelector';
@@ -31,6 +32,7 @@ export default function ChatContainer() {
         totalSteps,
         phase,
         result,
+        showIncomeTable,  // 중위소득 기준표 표시 여부
         sendChoice,
         sendText,
         startChat,
@@ -137,6 +139,11 @@ export default function ChatContainer() {
                 )}
                 {isLoading && phase === 'analyzing' && (
                     <LoadingIndicator mode="analyzing" />
+                )}
+
+                {/* 중위소득 기준표 (소득 관련 질문 시 표시) */}
+                {showIncomeTable && !isLoading && phase === 'questioning' && (
+                    <IncomeTable />
                 )}
 
                 {/* 진단 결과 카드 (result 단계에서만 표시) */}

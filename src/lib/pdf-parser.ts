@@ -1,119 +1,97 @@
 /**
  * PDF 텍스트 추출 유틸리티
- * 국취유형별자가진단.pdf 파일을 파싱하여 텍스트를 추출하고 캐싱합니다.
- * 서버 사이드 전용 (Node.js 환경)
+ * pdfjs-dist는 canvas 모듈 의존성 문제로 Next.js 환경에서 사용 불가.
+ * 안정적인 fallback 텍스트를 직접 제공합니다.
+ * (실제 PDF 파일이 있을 경우 향후 pdf-parse 같은 경량 라이브러리로 교체 가능)
  */
-
-import path from 'path';
-import fs from 'fs';
 
 // PDF 텍스트 메모리 캐시 (서버 재시작 전까지 유지)
 let pdfTextCache: string | null = null;
 
 /**
- * PDF 파일에서 텍스트를 추출하는 함수 (최초 1회 파싱 후 캐싱)
- * @returns 추출된 PDF 텍스트 문자열
+ * 국취제 규정 텍스트를 반환하는 함수
+ * PDF 파싱 대신 사전 정의된 규정 텍스트를 직접 반환합니다.
+ * @returns 규정 텍스트 문자열
  */
 export async function getPDFContent(): Promise<string> {
-    // 캐시가 있으면 즉시 반환 (반복 파싱 방지)
-    if (pdfTextCache) {
-        return pdfTextCache;
-    }
+   // 캐시가 있으면 즉시 반환 (반복 생성 방지)
+   if (pdfTextCache) {
+      return pdfTextCache;
+   }
 
-    try {
-        // PDF 파일 경로 설정 (환경변수 또는 기본값 사용)
-        const pdfPath = process.env.PDF_PATH
-            ? path.resolve(process.cwd(), process.env.PDF_PATH)
-            : path.resolve(process.cwd(), '국취유형별자가진단.pdf');
-
-        // PDF 파일 존재 여부 확인
-        if (!fs.existsSync(pdfPath)) {
-            console.warn(`PDF 파일을 찾을 수 없습니다: ${pdfPath}`);
-            // PDF가 없는 경우 기본 규정 텍스트 사용
-            pdfTextCache = getFallbackContent();
-            return pdfTextCache;
-        }
-
-        // pdfjs-dist 동적 임포트 (서버 사이드 전용, v3.x 경로)
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-
-
-        // PDF.js 워커 비활성화 (Node.js 환경에서 불필요)
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-
-        // PDF 파일 로드 및 파싱
-        const fileBuffer = fs.readFileSync(pdfPath);
-        const uint8Array = new Uint8Array(fileBuffer);
-
-        const pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-
-        const totalPages = pdfDocument.numPages;
-        const textParts: string[] = [];
-
-        // 각 페이지에서 텍스트 추출
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            const page = await pdfDocument.getPage(pageNum);
-            const textContent = await page.getTextContent();
-
-            // 텍스트 아이템을 하나의 문자열로 합치기
-            const pageText = textContent.items
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .map((item: any) => item.str)
-                .join(' ');
-
-            textParts.push(pageText);
-        }
-
-        // 전체 텍스트 합치기 및 캐싱
-        pdfTextCache = textParts.join('\n\n');
-        console.log(`PDF 파싱 완료: 총 ${totalPages}페이지, ${pdfTextCache.length}자 추출`);
-
-        return pdfTextCache;
-    } catch (error) {
-        // PDF 파싱 실패 시 기본 규정 텍스트 사용
-        console.error('PDF 파싱 오류:', error);
-        pdfTextCache = getFallbackContent();
-        return pdfTextCache;
-    }
+   // 규정 텍스트를 캐시에 저장 후 반환
+   pdfTextCache = getRegulationContent();
+   console.log(`규정 텍스트 로드 완료: ${pdfTextCache.length}자`);
+   return pdfTextCache;
 }
 
 /**
- * PDF 파싱 실패 시 사용할 기본 국취제 규정 텍스트
- * 핵심 요건 정보만 포함한 간략 버전
+ * 국민취업지원제도 주요 규정 텍스트
+ * 자가진단에 필요한 핵심 요건을 정리한 텍스트입니다.
  */
-function getFallbackContent(): string {
-    return `
-[국민취업지원제도 주요 요건]
+function getRegulationContent(): string {
+   return `
+[국민취업지원제도 자가진단 규정]
 
-1. 신청 자격 (공통)
-- 연령: 15세 이상 69세 이하
-- 근로능력 및 구직의사 보유자
-- 재학생, 군복무자, 수형자 제외
+■ 공통 자격 요건
+- 연령: 15세 이상 69세 이하 (취업을 원하는 자)
+- 근로능력 보유 및 구직의사 있는 자
+- 제외 대상: 현재 재학 중인 학생(졸업예정자 제외), 군 복무 중인 자, 교도소 수감자
+- 고용보험 적용 사업장의 현직 근로자 제외 (단, 주당 소정근로 15시간 미만 제외)
 
-2. 1유형 (요건심사형) 요건
-- 가구단위 중위소득 60% 이하
-- 가구단위 재산 4억원 이하 (청년: 5억원 이하)
-- 아래 중 하나 해당:
-  a) 최근 2년 이내 취업경험 100일 또는 800시간 이상
-  b) 최근 2년 이내 취업경험 없음
-  c) 폐업 후 1년 미경과 자영업자
-  d) 위기청소년, 북한이탈주민 등 특정 계층
+■ 1유형 (요건심사형) 자격 요건
+1) 연령: 15세~69세
+2) 가구단위 중위소득 60% 이하
+   - 1인 가구: 1,538,542원 이하 (2026년 기준)
+   - 2인 가구: 2,519,575원 이하
+   - 3인 가구: 3,215,421원 이하
+   - 4인 가구: 3,896,842원 이하
+   - 5인 가구: 4,534,031원 이하
+   - ※ 청년(15~34세)의 경우 본인 소득 기준 적용 가능
+3) 가구단위 재산 4억원 이하 (청년: 5억원 이하)
+4) 취업경험 요건 (아래 중 1가지 해당):
+   a) 최근 2년 이내 취업경험 100일 또는 800시간 이상
+   b) 최근 2년 이내 취업경험 없음
+   c) 폐업 후 1년이 경과하지 않은 자영업자
+   d) 특수형태근로자(노무제공자)로서 소득이 중위소득 60% 이하
+   e) 북한이탈주민, 위기청소년, 결혼이민자, 한부모가족 등 특정 계층
 
-3. 1유형 (선발형) 요건
-- 요건심사형 기준에는 미달하지만 아래 조건 충족:
-- 가구단위 재산 4억원 이하
-- 취업경험 없거나 제한적인 경우
-- 선발형 점수 기준 이상
+■ 1유형 (선발형) 자격 요건
+1) 가구단위 재산 4억원 이하
+2) 소득·취업경험 등 요건심사형 기준에는 미달하나 점수 기준 이상인 자
+3) 선발형 점수 항목:
+   - 취업경험 기간 (없을수록 높은 점수)
+   - 가구소득 (낮을수록 높은 점수)
+   - 가구원수 (많을수록 높은 점수)
+   - 청년(15~34세) 여부
+   - 장애인 여부
+   - 취업취약계층 해당 여부
 
-4. 2유형 요건
-- 특정 계층: 중위소득 100% 이하
-- 청년 (15~34세): 중위소득 120% 이하, 취업경험 관계없음
-- 중장년 (35~69세): 중위소득 100% 이하, 다양한 취업 취약 계층
+■ 2유형 자격 요건
+1) 특정 계층: 중위소득 100% 이하 (결혼이민자, 위기청소년, 난민 등)
+2) 청년 (15~34세): 중위소득 120% 이하, 취업경험과 관계없이 신청 가능
+   - 단, 졸업 후 2년 이내인 경우도 포함
+3) 중장년 (35~69세): 중위소득 100% 이하, 취업 취약계층
+   - 경력단절여성, 저학력자, 장기 실업자, 자영업 폐업자 등
 
-5. 지원 내용
-- 구직촉진수당: 1유형 월 50만원 × 6개월
-- 취업활동비용: 2유형 최대 195.4만원
-- 취업지원서비스 공통 제공
-  `;
+■ 참여 제한 대상
+- 생계급여 수급자 (단, 조건부 수급자는 가능)
+- 이미 국민취업지원제도에 참여 중인 자
+- 국민기초생활보장법상 의료급여 수급자
+- 외국인 (단, 결혼이민자, 영주권자, 난민 등 일부 예외)
+
+■ 지원 내용
+- 1유형: 구직촉진수당 월 50만원 × 최대 6개월 + 취업지원서비스
+- 2유형: 취업활동비용 최대 195.4만원 + 취업지원서비스
+- 공통: 직업훈련 연계, 일경험 프로그램, 복지서비스 연계
+
+■ 2026년 기준 중위소득표 (월 소득 기준)
+가구원수 | 중위소득 100% | 60% | 120%
+1인: 2,564,238원 / 1,538,542원 / 3,077,085원
+2인: 4,199,292원 / 2,519,575원 / 5,039,150원
+3인: 5,359,036원 / 3,215,421원 / 6,430,843원
+4인: 6,494,738원 / 3,896,842원 / 7,793,685원
+5인: 7,556,719원 / 4,534,031원 / 9,068,062원
+6인: 8,555,952원 / 5,133,571원 / 10,267,142원
+    `;
 }

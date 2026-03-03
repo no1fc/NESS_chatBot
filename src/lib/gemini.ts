@@ -66,9 +66,9 @@ export async function generateResponse(
         } catch (error: unknown) {
             const apiError = error as { status?: number; statusText?: string };
 
-            // Rate Limit(429) 발생 시 재시도
-            if (apiError?.status === 429 && attempt < maxRetries) {
-                console.warn(`Gemini Rate Limit 초과. ${attempt}회 시도 실패, 10초 후 재시도...`);
+            // Rate Limit(429) 또는 서버 과부하(503) 발생 시 재시도
+            if ((apiError?.status === 429 || apiError?.status === 503) && attempt < maxRetries) {
+                console.warn(`Gemini 오류 ${apiError.status}. ${attempt}회 시도 실패, 10초 후 재시도...`);
                 // 10초 대기 후 재시도
                 await new Promise((resolve) => setTimeout(resolve, 10000));
                 continue;

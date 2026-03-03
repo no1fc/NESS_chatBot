@@ -33,6 +33,7 @@ export interface Message {
 export interface DiagnosisResult {
     type: '1유형_요건심사형' | '1유형_선발형' | '2유형' | '제한';
     score?: number | null;
+    scoreDetails?: string[];
     description: string;
     subType?: string | null;
     tips?: string[];
@@ -50,6 +51,7 @@ export interface UseChatReturn {
     totalSteps: number;
     phase: ChatPhase;
     result: DiagnosisResult | null;
+    showIncomeTable: boolean; // 중위소득 기준표 표시 여부
     sendChoice: (choice: Choice) => Promise<void>;
     sendText: (text: string) => Promise<void>;
     startChat: () => Promise<void>;
@@ -120,6 +122,8 @@ export function useChat(): UseChatReturn {
     const [history, setHistory] = useState<Array<{ role: 'user' | 'model'; content: string }>>([]);
     // 최종 진단 결과
     const [result, setResult] = useState<DiagnosisResult | null>(null);
+    // 중위소득 기준표 표시 여부 (소득 관련 질문 시 true)
+    const [showIncomeTable, setShowIncomeTable] = useState<boolean>(false);
 
     /**
      * /api/chat 호출 공통 함수
@@ -131,7 +135,8 @@ export function useChat(): UseChatReturn {
         async (
             currentPhase: ChatPhase,
             newHistory: Array<{ role: 'user' | 'model'; content: string }>,
-            answers: Record<string, string>
+            answers: Record<string, string>,
+            currentStepForAPI?: number
         ) => {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -140,6 +145,7 @@ export function useChat(): UseChatReturn {
                     messages: newHistory,
                     phase: currentPhase,
                     userAnswers: answers,
+                    currentStep: currentStepForAPI,
                 }),
             });
 
@@ -160,7 +166,7 @@ export function useChat(): UseChatReturn {
         setIsLoading(true);
         try {
             // 인트로 메시지 요청
-            const data = await callChatAPI('intro', [], {});
+            const data = await callChatAPI('intro', [], {}, 0);
 
             // 인트로 AI 메시지 추가
             const introMessage = createAIMessage(data.message, data.choices);
@@ -209,7 +215,7 @@ export function useChat(): UseChatReturn {
             setUserAnswers(newAnswers);
 
             // API 호출
-            const data = await callChatAPI(nextPhase, newHistory, newAnswers);
+            const data = await callChatAPI(nextPhase, newHistory, newAnswers, currentStep);
 
             // 단계 업데이트
             if (data.currentStep) setCurrentStep(data.currentStep);
@@ -217,9 +223,13 @@ export function useChat(): UseChatReturn {
             // 단계 업데이트
             if (data.phase) setPhase(data.phase as ChatPhase);
 
+            // 중위소득 기준표 표시 여부 업데이트
+            setShowIncomeTable(!!data.showIncomeTable);
+
             // 판별 결과 처리
             if (data.phase === 'result' && data.result) {
                 setResult(data.result as DiagnosisResult);
+                setShowIncomeTable(false); // 결과 화면에서는 기준표 숨김
             }
 
             // AI 응답 메시지 추가
@@ -270,13 +280,17 @@ export function useChat(): UseChatReturn {
             setUserAnswers(newAnswers);
 
             // API 호출 (현재 phase 유지)
-            const data = await callChatAPI(phase, newHistory, newAnswers);
+            const data = await callChatAPI(phase, newHistory, newAnswers, currentStep);
 
             if (data.currentStep) setCurrentStep(data.currentStep);
             if (data.phase) setPhase(data.phase as ChatPhase);
 
+            // 중위소득 기준표 표시 여부 업데이트
+            setShowIncomeTable(!!data.showIncomeTable);
+
             if (data.phase === 'result' && data.result) {
                 setResult(data.result as DiagnosisResult);
+                setShowIncomeTable(false);
             }
 
             const aiMsg = createAIMessage(data.message, data.choices);
@@ -308,7 +322,7 @@ export function useChat(): UseChatReturn {
             setMessages((prev) => [...prev, loadingMsg]);
 
             try {
-                const data = await callChatAPI('analyzing', currentHistory, answers);
+                const data = await callChatAPI('analyzing', currentHistory, answers, currentStep);
 
                 if (data.result) {
                     setResult(data.result as DiagnosisResult);
@@ -348,6 +362,7 @@ export function useChat(): UseChatReturn {
         setUserAnswers({});
         setHistory([]);
         setResult(null);
+        setShowIncomeTable(false); // 기준표 초기화
     }, []);
 
     return {
@@ -357,6 +372,7 @@ export function useChat(): UseChatReturn {
         totalSteps,
         phase,
         result,
+        showIncomeTable,
         sendChoice,
         sendText,
         startChat,
