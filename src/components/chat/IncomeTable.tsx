@@ -13,7 +13,7 @@ const INCOME_TABLE = [
 ];
 
 export default function IncomeTable() {
-    const [isExpanded, setIsExpanded] = useState<boolean>(true);
+    const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     return (
         <div className="mx-auto w-full max-w-lg mb-8 animate-reveal-up">

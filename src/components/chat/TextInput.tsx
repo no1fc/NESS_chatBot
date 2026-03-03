@@ -11,6 +11,29 @@ interface TextInputProps {
 }
 
 export default function TextInput({ onSubmit, onCancel, placeholder, disabled }: TextInputProps) {
+    const [text, setText] = useState('');
+
+    const handleSubmit = () => {
+        const trimmed = text.trim();
+        if (trimmed && !disabled) {
+            onSubmit(trimmed);
+            setText('');
+        }
+    };
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.value.length <= 500) {
+            setText(e.target.value);
+        }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit();
+        }
+    };
+
     const canSubmit = text.trim().length > 0 && !disabled;
 
     return (

@@ -49,11 +49,11 @@ export interface UseChatReturn {
     isLoading: boolean;
     currentStep: number;
     totalSteps: number;
-    phase: ChatPhase;
-    result: DiagnosisResult | null;
+    isError: boolean;
     showIncomeTable: boolean; // 중위소득 기준표 표시 여부
     sendChoice: (choice: Choice) => Promise<void>;
     sendText: (text: string) => Promise<void>;
+    retry: () => Promise<void>;
     startChat: () => Promise<void>;
     resetChat: () => void;
 }
@@ -113,7 +113,7 @@ export function useChat(): UseChatReturn {
     // 현재 질문 단계 (0: 시작 전, 1~5: 질문 진행 중)
     const [currentStep, setCurrentStep] = useState<number>(0);
     // 전체 질문 단계 수
-    const [totalSteps] = useState<number>(5);
+    const [totalSteps] = useState<number>(8);
     // 현재 챗봇 진행 단계
     const [phase, setPhase] = useState<ChatPhase>('intro');
     // 수집된 사용자 답변 (유형 판별에 사용)
@@ -124,6 +124,13 @@ export function useChat(): UseChatReturn {
     const [result, setResult] = useState<DiagnosisResult | null>(null);
     // 중위소득 기준표 표시 여부 (소득 관련 질문 시 true)
     const [showIncomeTable, setShowIncomeTable] = useState<boolean>(false);
+    // 에러 상태 (재시도 버튼 노출용)
+    const [isError, setIsError] = useState<boolean>(false);
+    // 마지막 작업 저장 (재시도용)
+    const [lastAction, setLastAction] = useState<{
+        type: 'choice' | 'text' | 'analysis';
+        data: any;
+    } | null>(null);
 
     /**
      * /api/chat 호출 공통 함수
@@ -192,6 +199,8 @@ export function useChat(): UseChatReturn {
         if (isLoading) return; // 로딩 중 중복 전송 방지
 
         setIsLoading(true);
+        setIsError(false);
+        setLastAction({ type: 'choice', data: choice });
 
         // 사용자 메시지 즉시 추가 (UI 반응성)
         const userMsg = createUserMessage(choice.label);
@@ -238,6 +247,7 @@ export function useChat(): UseChatReturn {
 
             // 히스토리에 AI 응답 추가
             setHistory((prev) => [...prev, { role: 'model', content: data.message }]);
+            setLastAction(null); // 성공 시 마지막 작업 초기화
 
             // analyzing 단계로 자동 전환 (마지막 질문 완료 시)
             if (data.phase === 'questioning' && data.currentStep > totalSteps) {
@@ -245,7 +255,8 @@ export function useChat(): UseChatReturn {
             }
         } catch (error) {
             console.error('선택지 전송 오류:', error);
-            const errMsg = createAIMessage('응답 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+            setIsError(true);
+            const errMsg = createAIMessage('응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
             setMessages((prev) => [...prev, errMsg]);
         } finally {
             setIsLoading(false);
@@ -261,6 +272,8 @@ export function useChat(): UseChatReturn {
         if (isLoading || !text.trim()) return;
 
         setIsLoading(true);
+        setIsError(false);
+        setLastAction({ type: 'text', data: text });
 
         // 사용자 메시지 즉시 추가
         const userMsg = createUserMessage(text);
@@ -296,14 +309,37 @@ export function useChat(): UseChatReturn {
             const aiMsg = createAIMessage(data.message, data.choices);
             setMessages((prev) => [...prev, aiMsg]);
             setHistory((prev) => [...prev, { role: 'model', content: data.message }]);
+            setLastAction(null);
         } catch (error) {
             console.error('텍스트 전송 오류:', error);
-            const errMsg = createAIMessage('응답 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+            setIsError(true);
+            const errMsg = createAIMessage('응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
             setMessages((prev) => [...prev, errMsg]);
         } finally {
             setIsLoading(false);
         }
     }, [isLoading, history, phase, currentStep, userAnswers, callChatAPI]);
+
+    /**
+     * 마지막 작업을 다시 시도하는 함수
+     */
+    const retry = useCallback(async () => {
+        if (!lastAction || isLoading) return;
+
+        // 마지막 에러 메시지 제거 (사용자 경험 개선)
+        setMessages((prev) => prev.slice(0, -1));
+
+        if (lastAction.type === 'choice') {
+            // 선택된 메시지도 중복 추가되지 않도록 slice 하나 더
+            setMessages((prev) => prev.slice(0, -1));
+            await sendChoice(lastAction.data);
+        } else if (lastAction.type === 'text') {
+            setMessages((prev) => prev.slice(0, -1));
+            await sendText(lastAction.data);
+        } else if (lastAction.type === 'analysis') {
+            await triggerAnalysis(lastAction.data.history, lastAction.data.answers);
+        }
+    }, [lastAction, isLoading, sendChoice, sendText]);
 
     /**
      * 최종 유형 판별 분석 트리거 함수
@@ -316,6 +352,8 @@ export function useChat(): UseChatReturn {
         ) => {
             setPhase('analyzing');
             setIsLoading(true);
+            setIsError(false);
+            setLastAction({ type: 'analysis', data: { history: currentHistory, answers } });
 
             // 로딩 중 메시지 표시
             const loadingMsg = createAIMessage('🔍 AI가 요건을 검토 중입니다...');
@@ -334,20 +372,22 @@ export function useChat(): UseChatReturn {
                     const withoutLoading = prev.slice(0, -1); // 마지막 로딩 메시지 제거
                     return [...withoutLoading, createAIMessage(data.message)];
                 });
+                setLastAction(null);
             } catch (error) {
                 console.error('분석 오류:', error);
+                setIsError(true);
                 setMessages((prev) => {
                     const withoutLoading = prev.slice(0, -1);
                     return [
                         ...withoutLoading,
-                        createAIMessage('분석 중 오류가 발생했습니다. 다시 시도해주세요.'),
+                        createAIMessage('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'),
                     ];
                 });
             } finally {
                 setIsLoading(false);
             }
         },
-        [callChatAPI]
+        [callChatAPI, currentStep]
     );
 
     /**
@@ -363,6 +403,8 @@ export function useChat(): UseChatReturn {
         setHistory([]);
         setResult(null);
         setShowIncomeTable(false); // 기준표 초기화
+        setIsError(false);
+        setLastAction(null);
     }, []);
 
     return {
@@ -372,9 +414,11 @@ export function useChat(): UseChatReturn {
         totalSteps,
         phase,
         result,
+        isError,
         showIncomeTable,
         sendChoice,
         sendText,
+        retry,
         startChat,
         resetChat,
     };

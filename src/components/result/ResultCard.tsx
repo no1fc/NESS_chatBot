@@ -137,7 +137,7 @@ export default function ResultCard({ result, onSelectRegion }: { result: Diagnos
                         </a>
                     )}
                     <p className="text-center text-[10px] text-white/10 leading-relaxed font-sans">
-                        본 진출 결과는 단순 참고용이며, 정확한 수급 자격은 관할 고용센터의 공식 심사를 통해 결정됩니다.
+                        본 결과는 단순 참고용이며, 정확한 수급 자격은 관할 고용센터의 공식 심사를 통해 결정됩니다.
                     </p>
                 </div>
             </div>

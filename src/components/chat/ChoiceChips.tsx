@@ -8,11 +8,12 @@ interface Choice {
     id: string;
     label: string;
     type?: 'text' | 'choice';
+    isOther?: boolean;
 }
 
 interface ChoiceChipsProps {
     choices: Choice[];
-    onSelect: (choice: Choice) => void;
+    onSelect: (choice: any) => void;
     onTextSubmit: (text: string) => void;
     disabled?: boolean;
 }
@@ -22,7 +23,7 @@ export default function ChoiceChips({ choices, onSelect, onTextSubmit, disabled 
 
     const handleChoiceClick = (choice: Choice) => {
         if (disabled) return;
-        if (choice.type === 'text') {
+        if (choice.type === 'text' || choice.isOther) {
             setSelectedTextChoice(choice);
         } else {
             onSelect(choice);
