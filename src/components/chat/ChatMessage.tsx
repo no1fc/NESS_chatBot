@@ -1,67 +1,44 @@
-/**
- * ChatMessage 컴포넌트
- * AI 메시지와 사용자 메시지를 각각 다른 스타일로 렌더링하는 버블 컴포넌트입니다.
- * 가장 최근 메시지(isLatest)에만 슬라이드-인 애니메이션을 적용합니다.
- */
-
 'use client';
 
-import { Bot, User } from 'lucide-react';
 import { Message } from '@/hooks/useChat';
+import { Sparkles, User } from 'lucide-react';
 
 interface ChatMessageProps {
-    message: Message;    // 메시지 데이터
-    isLatest: boolean;   // 가장 최근 메시지 여부 (애니메이션 적용 여부)
+    message: Message;
+    isLatest: boolean;
 }
 
-/**
- * ChatMessage 컴포넌트
- * role에 따라 AI (왼쪽) 또는 사용자 (오른쪽) 버블로 렌더링합니다.
- */
 export default function ChatMessage({ message, isLatest }: ChatMessageProps) {
-    // AI 메시지인지 여부
     const isAI = message.role === 'ai';
 
     return (
         <div
-            className={`flex items-end gap-2 ${isAI ? 'justify-start' : 'justify-end'}`}
-            // 새 메시지에만 애니메이션 적용 (성능 최적화)
-            style={{
-                animation: isLatest
-                    ? `${isAI ? 'slideInLeft' : 'slideInRight'} 0.25s ease-out`
-                    : 'none',
-            }}
+            className={`flex items-start gap-4 mb-8 ${isLatest ? 'animate-reveal-up' : ''}`}
+            style={{ animationDuration: '0.6s' }}
         >
-            {/* AI 아이콘 (왼쪽 정렬 메시지에만 표시) */}
-            {isAI && (
-                <div
-                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--color-primary-subtle)', border: '1px solid #BFDBFE' }}
-                    aria-hidden="true"
-                >
-                    <Bot size={16} color="var(--color-primary)" />
-                </div>
-            )}
-
-            {/* 메시지 버블 */}
-            <div
-                className={isAI ? 'chat-bubble-ai' : 'chat-bubble-user'}
-                role="article"
-                aria-label={isAI ? 'AI 메시지' : '내 메시지'}
-            >
-                {message.content}
+            {/* 아이콘 영역 */}
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+                {isAI ? (
+                    <div className="w-full h-full bg-[#1F2937] flex items-center justify-center border border-white/5">
+                        <Sparkles size={16} className="text-[#2DD4BF]" />
+                    </div>
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center border border-white/10">
+                        <User size={14} className="text-white/40" />
+                    </div>
+                )}
             </div>
 
-            {/* 사용자 아이콘 (오른쪽 정렬 메시지에만 표시) */}
-            {!isAI && (
-                <div
-                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--color-gray-200)', border: '1px solid var(--color-gray-300)' }}
-                    aria-hidden="true"
-                >
-                    <User size={16} color="var(--color-gray-500)" />
+            {/* 메시지 내용 영역 */}
+            <div className="flex-1 flex flex-col pt-1">
+                <div className={`text-[10px] font-black tracking-[0.2em] uppercase mb-2 ${isAI ? 'text-[#2DD4BF] text-flow bg-clip-text text-transparent bg-gradient-to-r from-[#2DD4BF] via-[#34D399] to-[#2DD4BF]' : 'text-white/20'}`}>
+                    {isAI ? 'Ness AI Mentor' : 'User'}
                 </div>
-            )}
+
+                <div className={`text-[15px] leading-[1.7] tracking-tight ${isAI ? 'text-white/80 font-medium' : 'bg-white/[0.03] border border-white/[0.05] px-5 py-4 rounded-[1.5rem] rounded-tl-none text-white/70 self-start max-w-[90%]'}`}>
+                    {message.content}
+                </div>
+            </div>
         </div>
     );
 }

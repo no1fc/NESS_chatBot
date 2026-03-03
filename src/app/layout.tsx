@@ -1,11 +1,6 @@
-/**
- * 루트 레이아웃 (Root Layout)
- * 앱 전체에 적용되는 메타데이터, 폰트, 공통 HTML 구조를 정의합니다.
- * Noto Sans KR + Inter 폰트 (Google Fonts link 태그), SEO 메타태그 포함.
- */
-
 import type { Metadata } from 'next';
 import './globals.css';
+import Header from '@/components/layout/Header';
 
 // SEO 메타데이터 설정
 export const metadata: Metadata = {
@@ -45,14 +40,26 @@ export default function RootLayout({
         {/* Google Fonts 프리커넥트 (성능 최적화) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Noto Sans KR (한글) + Inter (영문/숫자) 폰트 로드 */}
+        {/* 현대적인 산세리프 폰트 로드 */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">
-        {children}
+      <body className="antialiased font-sans bg-[#020617] text-white">
+        {/* 전체 배경 글로우 효과 */}
+        <div className="bg-glow" aria-hidden="true" />
+
+        <div className="app-container">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

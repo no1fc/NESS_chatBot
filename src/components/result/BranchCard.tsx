@@ -1,188 +1,121 @@
-/**
- * BranchCard 컴포넌트
- * 지역 선택 후 잡모아 지점 정보 또는 고용24 안내를 표시하는 카드 컴포넌트입니다.
- * 지점이 있으면 지점명/주소/연락처와 CTA 버튼을, 없으면 고용24 안내를 표시합니다.
- */
-
 'use client';
 
 import { MapPin, Phone, ExternalLink, Building2 } from 'lucide-react';
 import { Branch } from '@/lib/db';
 
 interface BranchCardProps {
-    branch: Branch | null;  // 지점 정보 (null이면 고용24 안내)
-    diagnosisType: string;  // UTM 파라미터용 진단 유형
+    branch: Branch | null;
+    diagnosisType: string;
 }
 
-/**
- * BranchCard 컴포넌트
- * branch가 있을 때: 지점 상세 정보 + 잡모아 CTA 버튼
- * branch가 없을 때: 고용24 안내 + 고용24 URL 버튼
- */
 export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
-    // UTM 파라미터 생성 (진단 유형 및 소스 추적)
     const utmParams = new URLSearchParams({
         type: diagnosisType,
         source: 'chatbot',
     }).toString();
 
-    // ==================== 지점 미보유 안내 ====================
     if (!branch) {
         return (
-            <div
-                className="result-card mx-auto w-full animate-fade-in-up"
-                style={{ maxWidth: '480px', border: '1px solid var(--color-gray-300)' }}
-            >
-                {/* 안내 헤더 */}
-                <div className="flex items-center gap-3 mb-4">
-                    <span style={{ fontSize: '1.75rem' }} aria-hidden="true">🏢</span>
-                    <div>
-                        <p className="text-xs font-medium" style={{ color: 'var(--color-gray-500)' }}>
-                            지점 안내
-                        </p>
-                        <p className="font-bold" style={{ color: 'var(--color-gray-900)' }}>
-                            해당 지역에 잡모아 지점이 없습니다
+            <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
+                <div className="glass-panel rounded-[2.5rem] p-10 border-2 border-white/5 relative overflow-hidden">
+                    <div className="flex flex-col items-center text-center mb-10 relative z-10">
+                        <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+                            <Building2 size={36} className="text-white/20" />
+                        </div>
+                        <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.3em] mb-3">Branch Information</p>
+                        <h2 className="text-white text-3xl font-black tracking-tighter">상담 가능한 지점이 없습니다</h2>
+                    </div>
+
+                    <div className="bg-white/5 rounded-[1.5rem] p-6 mb-10 border border-white/5 relative z-10">
+                        <p className="text-white/60 text-sm leading-relaxed text-center font-medium">
+                            선택하신 지역에는 현재 잡모아 지점이 운영되고 있지 않습니다.<br />
+                            공식 포털을 통해 온라인으로 신청하실 수 있습니다.
                         </p>
                     </div>
+
+                    <a
+                        href={`https://www.work24.go.kr/cm/c/d/cmCdPopup.do?cmCdDtlCd=SE002&${utmParams}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10 group relative z-10"
+                    >
+                        <ExternalLink size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        고용24에서 바로 신청하기
+                    </a>
                 </div>
-
-                <hr style={{ borderColor: 'var(--color-gray-200)', marginBottom: '16px' }} />
-
-                {/* 고용24 안내 메시지 */}
-                <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--color-gray-700)' }}>
-                    현재 선택한 지역에 잡모아 지점이 운영되지 않습니다.
-                    고용24 공식 사이트를 통해 가까운 고용센터에서 국민취업지원제도를 신청하실 수 있습니다.
-                </p>
-
-                {/* 고용24 CTA 버튼 */}
-                <a
-                    href={`https://www.work24.go.kr/cm/c/d/cmCdPopup.do?cmCdDtlCd=SE002&${utmParams}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary w-full"
-                    aria-label="고용24 국민취업지원제도 신청 페이지 방문"
-                >
-                    <ExternalLink size={18} aria-hidden="true" />
-                    고용24 국민취업지원제도 가입하기
-                </a>
-
-                {/* 고용24 URL 표시 */}
-                <p className="text-xs text-center mt-3" style={{ color: 'var(--color-gray-500)' }}>
-                    www.work24.go.kr → 국민취업지원제도 신청
-                </p>
             </div>
         );
     }
 
-    // ==================== 지점 보유 안내 ====================
-    // 전용 URL에 UTM 파라미터 추가
     const branchUrl = branch.specific_url.includes('?')
         ? `${branch.specific_url}&${utmParams}`
         : `${branch.specific_url}?${utmParams}`;
 
     return (
-        <div
-            className="result-card mx-auto w-full animate-fade-in-up"
-            style={{
-                maxWidth: '480px',
-                border: '2px solid #93C5FD', // 파란색 테두리 (잡모아 지점 있음)
-            }}
-        >
-            {/* 지점 헤더 */}
-            <div className="flex items-center gap-3 mb-4">
-                <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--color-primary-subtle)' }}
-                    aria-hidden="true"
-                >
-                    <Building2 size={22} color="var(--color-primary)" />
-                </div>
-                <div>
-                    <p className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>
-                        🎯 가까운 잡모아 지점
-                    </p>
-                    <p className="font-bold text-base" style={{ color: 'var(--color-gray-900)' }}>
-                        {branch.branch_name}
-                    </p>
-                </div>
-            </div>
+        <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
+            <div className="glass-panel rounded-[2.5rem] p-10 border-2 border-[#2DD4BF]/20 relative overflow-hidden shadow-[0_0_50px_rgba(45,212,191,0.1)]">
+                {/* 배경 오로라 */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#2DD4BF] rounded-full blur-[100px] opacity-10 pointer-events-none" />
 
-            <hr style={{ borderColor: 'var(--color-gray-200)', marginBottom: '16px' }} />
+                <div className="flex flex-col items-center text-center mb-10 relative z-10">
+                    <div className="w-20 h-20 rounded-3xl bg-[#2DD4BF]/10 flex items-center justify-center mb-6 border border-[#2DD4BF]/20 backdrop-blur-3xl">
+                        <Building2 size={36} className="text-[#2DD4BF]" />
+                    </div>
+                    <p className="text-[#2DD4BF] text-[10px] font-black uppercase tracking-[0.3em] mb-3">Nearby Branch</p>
+                    <h2 className="text-white text-4xl font-black tracking-tighter">{branch.branch_name}</h2>
+                </div>
 
-            {/* 지점 상세 정보 */}
-            <div className="flex flex-col gap-3 mb-5">
-                {/* 주소 */}
-                <div className="flex items-start gap-3">
-                    <MapPin
-                        size={18}
-                        color="#EF4444"
-                        className="flex-shrink-0 mt-0.5"
-                        aria-hidden="true"
-                    />
-                    <div>
-                        <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-gray-500)' }}>
-                            주소
-                        </p>
-                        <p className="text-sm" style={{ color: 'var(--color-gray-900)' }}>
-                            {branch.address}
-                        </p>
+                <div className="space-y-4 mb-10 relative z-10">
+                    {/* 주소 */}
+                    <div className="bg-white/5 rounded-[1.5rem] p-6 border border-white/5 flex gap-5 hover:bg-white/[0.08] transition-colors">
+                        <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center flex-shrink-0 border border-red-500/20">
+                            <MapPin size={20} className="text-red-400" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Address</p>
+                            <p className="text-white/90 text-sm font-bold leading-relaxed">{branch.address}</p>
+                        </div>
+                    </div>
+
+                    {/* 연락처 */}
+                    <div className="bg-white/5 rounded-[1.5rem] p-6 border border-white/5 flex gap-5 hover:bg-white/[0.08] transition-colors group">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
+                            <Phone size={20} className="text-emerald-400" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Phone</p>
+                            <a href={`tel:${branch.phone}`} className="text-emerald-400 text-xl font-black tracking-tighter hover:underline decoration-2 underline-offset-4">
+                                {branch.phone}
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                {/* 연락처 */}
-                <div className="flex items-start gap-3">
-                    <Phone
-                        size={18}
-                        color="#10B981"
-                        className="flex-shrink-0 mt-0.5"
-                        aria-hidden="true"
-                    />
-                    <div>
-                        <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-gray-500)' }}>
-                            연락처
-                        </p>
-                        <a
-                            href={`tel:${branch.phone}`}
-                            className="text-sm font-medium"
-                            style={{ color: 'var(--color-primary)' }}
-                            aria-label={`전화하기 ${branch.phone}`}
-                        >
-                            {branch.phone}
-                        </a>
-                    </div>
+                <div className="flex flex-col gap-4 relative z-10">
+                    <a
+                        href={branchUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full h-16 rounded-[1.5rem] bg-gradient-to-r from-[#2DD4BF] to-[#34D399] text-[#0B1120] font-black text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] active:scale-[0.98]"
+                    >
+                        <ExternalLink size={20} />
+                        지금 바로 신청하기
+                    </a>
+
+                    <a
+                        href={`tel:${branch.phone}`}
+                        className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10"
+                    >
+                        <Phone size={20} />
+                        전화 상담 예약
+                    </a>
                 </div>
+
+                <p className="text-center text-[10px] text-white/10 mt-10 leading-relaxed font-sans font-medium">
+                    지점별 상황에 따라 대기 시간이 발생할 수 있습니다.<br />
+                    전문 상담원의 안내는 전액 무료로 제공됩니다.
+                </p>
             </div>
-
-            {/* 전화 상담 버튼 (보조) */}
-            <a
-                href={`tel:${branch.phone}`}
-                className="flex items-center justify-center gap-2 w-full rounded-xl py-3 mb-3 text-sm font-medium"
-                style={{
-                    border: '1.5px solid var(--color-gray-300)',
-                    background: 'var(--color-gray-100)',
-                    color: 'var(--color-gray-700)',
-                }}
-            >
-                <Phone size={16} aria-hidden="true" />
-                전화로 상담 예약하기
-            </a>
-
-            {/* 잡모아 지점 가입 CTA 버튼 (주요) */}
-            <a
-                href={branchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary w-full"
-                aria-label={`${branch.branch_name} 상담 신청 페이지 방문`}
-            >
-                <ExternalLink size={18} aria-hidden="true" />
-                잡모아 지점 가입/상담 신청하기 →
-            </a>
-
-            {/* 안내 문구 */}
-            <p className="text-xs text-center mt-3" style={{ color: 'var(--color-gray-500)' }}>
-                모집 인원에 따라 지점 운영 상황이 변경될 수 있습니다.
-            </p>
         </div>
     );
 }

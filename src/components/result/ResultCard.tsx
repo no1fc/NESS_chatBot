@@ -1,220 +1,146 @@
-/**
- * ResultCard 컴포넌트
- * AI 유형 판별 결과를 시각적으로 표시하는 카드 컴포넌트입니다.
- * 유형에 따라 다른 색상과 아이콘을 적용하며, AI 팁과 지역 선택 버튼을 포함합니다.
- */
-
 'use client';
 
 import { CheckCircle2, AlertTriangle, XCircle, Trophy, Lightbulb, MapPin } from 'lucide-react';
 import { DiagnosisResult } from '@/hooks/useChat';
 
-interface ResultCardProps {
-    result: DiagnosisResult;            // 진단 결과 데이터
-    onSelectRegion: () => void;         // 지역 선택 단계 진행 콜백
-}
-
-// 유형별 디자인 설정 맵
 const TYPE_CONFIG = {
     '1유형_요건심사형': {
-        // 1유형 요건심사형: 초록색 (의무 참여 가능)
         icon: CheckCircle2,
-        iconColor: '#10B981',
-        borderColor: '#6EE7B7',
-        badgeBackground: '#ECFDF5',
-        badgeColor: '#065F46',
+        iconColor: '#34D399',
+        borderColor: 'rgba(52, 211, 153, 0.2)',
+        glow: 'shadow-[0_0_40px_rgba(52,211,153,0.1)]',
         label: '1유형 (요건심사형)',
         emoji: '🎉',
     },
     '1유형_선발형': {
-        // 1유형 선발형: 파란색 (점수 기반 선발)
         icon: Trophy,
-        iconColor: '#2563EB',
-        borderColor: '#93C5FD',
-        badgeBackground: '#EFF6FF',
-        badgeColor: '#1E40AF',
+        iconColor: '#2DD4BF',
+        borderColor: 'rgba(45, 212, 191, 0.2)',
+        glow: 'shadow-[0_0_40px_rgba(45,212,191,0.1)]',
         label: '1유형 (선발형)',
         emoji: '🏆',
     },
     '2유형': {
-        // 2유형: 노란색 (지원 가능하나 조건 다름)
         icon: AlertTriangle,
-        iconColor: '#F59E0B',
-        borderColor: '#FCD34D',
-        badgeBackground: '#FFFBEB',
-        badgeColor: '#92400E',
-        label: '2유형',
+        iconColor: '#FBBF24',
+        borderColor: 'rgba(251, 191, 36, 0.1)',
+        glow: 'shadow-[0_0_40px_rgba(251,191,36,0.05)]',
+        label: '2유형 (일반형)',
         emoji: '📋',
     },
     '제한': {
-        // 참여 제한: 빨간색
         icon: XCircle,
-        iconColor: '#EF4444',
-        borderColor: '#FCA5A5',
-        badgeBackground: '#FEF2F2',
-        badgeColor: '#991B1B',
+        iconColor: '#F87171',
+        borderColor: 'rgba(248, 113, 113, 0.2)',
+        glow: 'shadow-[0_0_40px_rgba(248,113,113,0.1)]',
         label: '참여 제한',
         emoji: '⚠️',
     },
 };
 
-/**
- * ResultCard 컴포넌트
- * 진단 유형, 설명, AI 팁, 지역 선택 버튼을 포함하는 결과 카드를 렌더링합니다.
- */
-export default function ResultCard({ result, onSelectRegion }: ResultCardProps) {
-    // 유형별 설정 가져오기 (없으면 기본값 사용)
+export default function ResultCard({ result, onSelectRegion }: { result: DiagnosisResult; onSelectRegion: () => void }) {
     const config = TYPE_CONFIG[result.type] ?? TYPE_CONFIG['2유형'];
     const IconComponent = config.icon;
-
-    // 참여 제한 여부 (지역 선택 버튼 숨김)
     const isRestricted = result.type === '제한';
 
     return (
-        <div
-            className="result-card mx-auto w-full"
-            style={{
-                // 유형별 테두리 색상 적용
-                border: `2px solid ${config.borderColor}`,
-                maxWidth: '480px',
-            }}
-        >
-            {/* 헤더: 이모지 + 유형 배지 + 아이콘 */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    {/* 유형 이모지 */}
-                    <span style={{ fontSize: '1.75rem' }} aria-hidden="true">
-                        {config.emoji}
-                    </span>
-
-                    {/* 유형 배지 */}
-                    <div>
-                        <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-gray-500)' }}>
-                            예상 진단 결과
-                        </p>
-                        <span
-                            className="text-sm font-bold px-3 py-1 rounded-full"
-                            style={{
-                                background: config.badgeBackground,
-                                color: config.badgeColor,
-                            }}
-                        >
-                            {config.label}
-                            {result.subType && ` · ${result.subType}`}
-                        </span>
-                    </div>
-                </div>
-
-                {/* 유형 아이콘 */}
-                <IconComponent size={32} color={config.iconColor} aria-hidden="true" />
-            </div>
-
-            {/* 구분선 */}
-            <hr style={{ borderColor: 'var(--color-gray-200)', marginBottom: '16px' }} />
-
-            {/* 점수 표시 (해당 시만) */}
-            {result.score !== null && result.score !== undefined && (
-                <div
-                    className="rounded-xl p-4 mb-4"
-                    style={{ background: 'var(--color-primary-subtle)' }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium" style={{ color: 'var(--color-primary-dark)' }}>
-                            가구단위 합산 점수
-                        </span>
-                        <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                            {result.score}점
-                        </span>
-                    </div>
-                    {/* 세부 점수 표시 */}
-                    {result.scoreDetails && result.scoreDetails.length > 0 && (
-                        <div className="mt-3 pt-3" style={{ borderTop: '1px dashed var(--color-primary-dark)', opacity: 0.8 }}>
-                            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-primary-dark)' }}>항목별 세부 점수</p>
-                            <ul className="text-xs space-y-1" style={{ color: 'var(--color-primary-dark)' }}>
-                                {result.scoreDetails.map((detail, idx) => (
-                                    <li key={idx}>• {detail}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* 결과 설명 */}
-            <p
-                className="text-sm leading-relaxed mb-4"
-                style={{ color: 'var(--color-gray-700)' }}
+        <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
+            <div
+                className={`glass-panel rounded-[2.5rem] p-10 border-2 overflow-hidden relative ${config.glow}`}
+                style={{ borderColor: config.borderColor }}
             >
-                {result.description}
-            </p>
-
-            {/* 참여 제한 사유 (해당 시만) */}
-            {isRestricted && result.restrictReason && (
+                {/* 배경 오로라 효과 */}
                 <div
-                    className="rounded-xl p-3 mb-4"
-                    style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}
-                >
-                    <p className="text-sm font-medium mb-2" style={{ color: '#991B1B' }}>
-                        제한 사유: {result.restrictReason}
-                    </p>
-                    <p className="text-xs font-semibold" style={{ color: '#7F1D1D' }}>
-                        ※ 본 진단은 챗봇 자가진단 결과로 실제 요건과 다를 수 있습니다. 정확한 확인을 위해 관할 고용센터 또는 하단의 지역 지점으로 문의를 부탁드립니다.
-                    </p>
-                </div>
-            )}
+                    className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-[100px] opacity-20 pointer-events-none"
+                    style={{ backgroundColor: config.iconColor }}
+                />
 
-            {/* AI 팁 (있을 경우만) */}
-            {result.tips && result.tips.length > 0 && (
-                <div
-                    className="rounded-xl p-3 mb-5"
-                    style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}
-                >
-                    <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb size={14} color="#D97706" aria-hidden="true" />
-                        <span className="text-xs font-semibold" style={{ color: '#92400E' }}>
-                            AI 팁
-                        </span>
+                <div className="flex flex-col items-center text-center mb-10 relative z-10">
+                    <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6 border border-white/10 backdrop-blur-3xl">
+                        <IconComponent size={36} color={config.iconColor} />
                     </div>
-                    {result.tips.map((tip, idx) => (
-                        <p key={idx} className="text-sm" style={{ color: '#78350F' }}>
-                            {tip}
-                        </p>
-                    ))}
+                    <p className="text-[#2DD4BF] text-[10px] font-black uppercase tracking-[0.3em] mb-3">Diagnosis Result</p>
+                    <h2 className="text-white text-4xl font-black tracking-tighter mb-2">{config.label}</h2>
+                    {result.subType && <p className="text-white/40 text-sm font-medium">{result.subType}</p>}
                 </div>
-            )}
 
-            {/* 면책 문구 */}
-            <div className="disclaimer-box mb-5">
-                <span aria-hidden="true">ℹ️</span>
-                <p>
-                    이 결과는 자가진단 보조 용도이며, 실제 참여 여부는 고용센터 심사에 따라 달라질 수 있습니다.
-                </p>
+                {result.score !== null && result.score !== undefined && (
+                    <div className="bg-white/5 rounded-[2rem] p-8 mb-10 border border-white/5 relative z-10">
+                        <div className="flex items-center justify-between">
+                            <div className="text-left">
+                                <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Eligibility Score</p>
+                                <p className="text-white/90 text-sm font-bold">종합 판정 점수</p>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-5xl font-black text-[#2DD4BF] tracking-tighter">{result.score}</span>
+                                <span className="text-white/10 text-xl font-bold ml-1">/100</span>
+                            </div>
+                        </div>
+
+                        {result.scoreDetails && result.scoreDetails.length > 0 && (
+                            <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
+                                {result.scoreDetails.map((detail, idx) => (
+                                    <div key={idx} className="flex items-start gap-3 text-xs text-white/40 leading-relaxed group">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF]/30 mt-1 transition-transform group-hover:scale-125" />
+                                        <span className="group-hover:text-white/70 transition-colors">{detail}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="mb-10 p-6 rounded-[1.5rem] bg-white/5 border-l-4 border-[#2DD4BF] relative z-10">
+                    <p className="text-white/80 text-sm leading-relaxed font-bold">
+                        {result.description}
+                    </p>
+                </div>
+
+                {isRestricted && result.restrictReason && (
+                    <div className="mb-10 p-6 rounded-[1.5rem] bg-red-500/5 border border-red-500/20 relative z-10">
+                        <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-3">Restriction Reason</p>
+                        <p className="text-red-200 text-sm font-bold leading-relaxed">{result.restrictReason}</p>
+                    </div>
+                )}
+
+                {result.tips && result.tips.length > 0 && (
+                    <div className="mb-12 space-y-4 relative z-10">
+                        <div className="flex items-center gap-3 ml-1">
+                            <Lightbulb size={16} className="text-[#FBBF24]" />
+                            <span className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">AI Mentor's Advice</span>
+                        </div>
+                        {result.tips.map((tip, idx) => (
+                            <div key={idx} className="p-5 rounded-[1.5rem] bg-white/5 border border-white/5 text-sm text-white/60 font-medium leading-relaxed hover:bg-white/[0.08] transition-colors">
+                                {tip}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="space-y-4 relative z-10">
+                    {!isRestricted ? (
+                        <button
+                            className="w-full h-16 rounded-[1.5rem] bg-gradient-to-r from-[#2DD4BF] to-[#34D399] text-[#0B1120] font-black text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] active:scale-[0.98]"
+                            onClick={onSelectRegion}
+                        >
+                            <MapPin size={20} fill="currentColor" />
+                            가까운 상담 지점 찾기
+                        </button>
+                    ) : (
+                        <a
+                            href="https://www.work24.go.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10"
+                        >
+                            고용24 공식 사이트 방문
+                        </a>
+                    )}
+                    <p className="text-center text-[10px] text-white/10 leading-relaxed font-sans">
+                        본 진출 결과는 단순 참고용이며, 정확한 수급 자격은 관할 고용센터의 공식 심사를 통해 결정됩니다.
+                    </p>
+                </div>
             </div>
-
-            {/* 지역 선택 CTA (참여 제한이 아닌 경우만) */}
-            {!isRestricted && (
-                <button
-                    className="btn-primary w-full"
-                    onClick={onSelectRegion}
-                    aria-label="가까운 잡모아 지점 찾기"
-                >
-                    <MapPin size={18} aria-hidden="true" />
-                    가까운 잡모아 지점 찾기
-                </button>
-            )}
-
-            {/* 참여 제한인 경우: 고용24 바로 안내 */}
-            {isRestricted && (
-                <a
-                    href="https://www.work24.go.kr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary w-full"
-                    aria-label="고용24 공식 사이트 방문"
-                >
-                    고용24에서 더 자세히 확인하기 →
-                </a>
-            )}
         </div>
     );
 }

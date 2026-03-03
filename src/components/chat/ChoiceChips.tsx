@@ -1,87 +1,64 @@
-/**
- * ChoiceChips 컴포넌트
- * 챗봇의 선택지(버튼)를 수직 리스트로 렌더링하는 컴포넌트입니다.
- * '기타' 선택지 클릭 시 TextInput 컴포넌트를 활성화합니다.
- */
-
 'use client';
 
 import { useState } from 'react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import TextInput from './TextInput';
-import { Choice } from '@/hooks/useChat';
-import { ChevronRight } from 'lucide-react';
 
-interface ChoiceChipsProps {
-    choices: Choice[];                      // 선택지 목록
-    onSelect: (choice: Choice) => void;     // 선택지 선택 콜백
-    onTextSubmit: (text: string) => void;   // 텍스트 입력 제출 콜백
-    disabled: boolean;                      // 로딩 중 비활성화 여부
+interface Choice {
+    id: string;
+    label: string;
+    type?: 'text' | 'choice';
 }
 
-/**
- * ChoiceChips 컴포넌트
- * 수직 리스트 형태의 선택지 버튼을 렌더링합니다.
- * '기타' 선택 시 텍스트 입력창으로 전환됩니다.
- */
-export default function ChoiceChips({
-    choices,
-    onSelect,
-    onTextSubmit,
-    disabled,
-}: ChoiceChipsProps) {
-    // '기타' 선택지 활성화 여부
-    const [showTextInput, setShowTextInput] = useState<boolean>(false);
+interface ChoiceChipsProps {
+    choices: Choice[];
+    onSelect: (choice: Choice) => void;
+    onTextSubmit: (text: string) => void;
+    disabled?: boolean;
+}
 
-    /**
-     * 선택지 클릭 핸들러
-     * '기타'인 경우 텍스트 입력창 표시, 아닌 경우 onSelect 호출
-     */
+export default function ChoiceChips({ choices, onSelect, onTextSubmit, disabled }: ChoiceChipsProps) {
+    const [selectedTextChoice, setSelectedTextChoice] = useState<Choice | null>(null);
+
     const handleChoiceClick = (choice: Choice) => {
-        if (choice.isOther) {
-            // '기타' 선택: 텍스트 입력창 토글
-            setShowTextInput(true);
+        if (disabled) return;
+        if (choice.type === 'text') {
+            setSelectedTextChoice(choice);
         } else {
-            // 일반 선택지: 즉시 전송
-            setShowTextInput(false);
             onSelect(choice);
         }
     };
 
-    /**
-     * 텍스트 제출 핸들러
-     * 텍스트 입력창 숨기고 sendText 호출
-     */
-    const handleTextSubmit = (text: string) => {
-        setShowTextInput(false);
-        onTextSubmit(text);
-    };
+    if (selectedTextChoice) {
+        return (
+            <TextInput
+                placeholder={`${selectedTextChoice.label} 입력...`}
+                onSubmit={(text) => {
+                    onTextSubmit(text);
+                    setSelectedTextChoice(null);
+                }}
+                onCancel={() => setSelectedTextChoice(null)}
+                disabled={disabled}
+            />
+        );
+    }
 
     return (
-        <div className="flex flex-col gap-2">
-            {/* '기타' 입력창 활성화 시 TextInput 표시 */}
-            {showTextInput ? (
-                <TextInput
-                    onSubmit={handleTextSubmit}
-                    onCancel={() => setShowTextInput(false)}
+        <div className="flex flex-wrap gap-2 justify-center items-center">
+            {choices.map((choice) => (
+                <button
+                    key={choice.id}
+                    onClick={() => handleChoiceClick(choice)}
                     disabled={disabled}
-                />
-            ) : (
-                /* 선택지 버튼 목록 */
-                choices.map((choice) => (
-                    <button
-                        key={choice.id}
-                        className="choice-chip"
-                        onClick={() => handleChoiceClick(choice)}
-                        disabled={disabled}
-                        aria-label={choice.label}
-                    >
-                        {/* 선택지 텍스트 */}
-                        <span className="flex-1">{choice.label}</span>
-                        {/* 오른쪽 화살표 아이콘 */}
-                        <ChevronRight size={16} color="var(--color-gray-500)" aria-hidden="true" />
-                    </button>
-                ))
-            )}
+                    className="group relative flex items-center gap-3 px-5 py-3 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {choice.type === 'text' && <Sparkles size={14} className="text-[#2DD4BF]" />}
+                    <span className="text-sm font-bold text-white/70 group-hover:text-[#2DD4BF] transition-colors">
+                        {choice.label}
+                    </span>
+                    <ChevronRight size={14} className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all" />
+                </button>
+            ))}
         </div>
     );
 }

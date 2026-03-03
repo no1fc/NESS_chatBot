@@ -1,139 +1,61 @@
-/**
- * TextInput 컴포넌트
- * '기타' 선택 시 활성화되는 자유 텍스트 입력 폼입니다.
- * Enter 키 또는 전송 버튼으로 제출하며, 취소 버튼으로 선택지 화면으로 돌아갑니다.
- */
-
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, X } from 'lucide-react';
+import { useState, KeyboardEvent, ChangeEvent } from 'react';
+import { Send, X, CornerDownLeft } from 'lucide-react';
 
 interface TextInputProps {
-    onSubmit: (text: string) => void;  // 텍스트 제출 콜백
-    onCancel: () => void;              // 취소 (선택지 화면으로 돌아가기) 콜백
-    disabled: boolean;                 // 로딩 중 비활성화 여부
-    placeholder?: string;             // 입력창 플레이스홀더 텍스트
+    onSubmit: (text: string) => void;
+    onCancel?: () => void;
+    placeholder?: string;
+    disabled?: boolean;
 }
 
-/**
- * TextInput 컴포넌트
- * 자유 텍스트 입력 폼. 자동 포커스, Shift+Enter 줄바꿈, Enter 제출 지원.
- */
-export default function TextInput({
-    onSubmit,
-    onCancel,
-    disabled,
-    placeholder = '상황을 자세히 설명해 주세요... (예: 군 복무를 마치고 3개월째 구직 중입니다)',
-}: TextInputProps) {
-    // 입력 텍스트 상태
-    const [text, setText] = useState<string>('');
-    // 텍스트영역 ref (자동 포커스 및 높이 조절)
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    // 컴포넌트 마운트 시 자동 포커스
-    useEffect(() => {
-        textareaRef.current?.focus();
-    }, []);
-
-    /**
-     * 키보드 이벤트 핸들러
-     * Enter: 제출 (Shift+Enter는 줄바꿈)
-     */
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            // Enter 단독: 제출 (기본 줄바꿈 방지)
-            e.preventDefault();
-            handleSubmit();
-        }
-        // Shift+Enter: 줄바꿈 허용 (기본 동작)
-    };
-
-    /**
-     * 제출 핸들러
-     * 빈 텍스트 제출 방지 및 길이 제한 적용
-     */
-    const handleSubmit = () => {
-        const trimmed = text.trim();
-        if (!trimmed || disabled) return;
-
-        // 최대 500자 제한 (보안 및 API 비용 절감)
-        if (trimmed.length > 500) {
-            alert('입력 내용은 500자를 초과할 수 없습니다.');
-            return;
-        }
-
-        onSubmit(trimmed);
-        setText(''); // 입력창 초기화
-    };
-
-    // 제출 버튼 활성화 여부
+export default function TextInput({ onSubmit, onCancel, placeholder, disabled }: TextInputProps) {
     const canSubmit = text.trim().length > 0 && !disabled;
 
     return (
-        <div
-            className="flex flex-col gap-2 animate-fade-in-up"
-            style={{ animation: 'fadeInUp 0.2s ease-out' }}
-        >
-            {/* 취소 버튼 (선택지 화면으로 돌아가기) */}
-            <button
-                onClick={onCancel}
-                className="flex items-center gap-1.5 text-sm self-start"
-                style={{ color: 'var(--color-gray-500)' }}
-                disabled={disabled}
-                aria-label="취소하고 선택지로 돌아가기"
-            >
-                <X size={14} />
-                <span>이전 선택지로 돌아가기</span>
-            </button>
-
-            {/* 텍스트 입력 영역 + 전송 버튼 */}
-            <div
-                className="flex items-end gap-2 rounded-xl p-3"
-                style={{
-                    border: '2px solid var(--color-primary)',
-                    background: 'white',
-                }}
-            >
-                {/* 텍스트 입력 창 */}
-                <textarea
-                    ref={textareaRef}
+        <div className="w-full flex flex-col gap-2">
+            <div className={`relative flex items-center transition-all duration-300 ${disabled ? 'opacity-50' : ''}`}>
+                <input
+                    type="text"
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    placeholder={placeholder}
+                    placeholder={placeholder || '메시지를 입력하세요...'}
                     disabled={disabled}
-                    maxLength={500}
-                    rows={3}
-                    className="flex-1 resize-none border-none outline-none text-sm leading-relaxed"
-                    style={{
-                        fontFamily: 'var(--font-sans)',
-                        color: 'var(--color-gray-900)',
-                        background: 'transparent',
-                    }}
-                    aria-label="기타 상황 설명 입력"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 pr-32 text-sm text-white focus:outline-none focus:border-[#2DD4BF]/30 transition-all placeholder:text-white/20"
                 />
 
-                {/* 전송 버튼 */}
-                <button
-                    onClick={handleSubmit}
-                    disabled={!canSubmit}
-                    className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all"
-                    style={{
-                        background: canSubmit ? 'var(--color-primary)' : 'var(--color-gray-200)',
-                        cursor: canSubmit ? 'pointer' : 'not-allowed',
-                        transition: 'var(--transition-fast)',
-                    }}
-                    aria-label="메시지 전송"
-                >
-                    <Send size={16} color={canSubmit ? 'white' : 'var(--color-gray-400)'} />
-                </button>
+                <div className="absolute right-2 flex items-center gap-2">
+                    {onCancel && (
+                        <button
+                            onClick={onCancel}
+                            disabled={disabled}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/20 hover:text-white/40 transition-colors"
+                            aria-label="취소"
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!canSubmit || disabled}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${canSubmit ? 'bg-[#2DD4BF] text-[#0B1120] hover:scale-105 shadow-lg shadow-[#2DD4BF]/10' : 'bg-white/5 text-white/10'}`}
+                        aria-label="전송"
+                    >
+                        <Send size={18} fill={canSubmit ? 'currentColor' : 'none'} />
+                    </button>
+                    <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 border border-white/5 ml-1">
+                        <CornerDownLeft size={10} className="text-white/20" />
+                        <span className="text-[9px] font-black text-white/20 tracking-tighter">ENTER</span>
+                    </div>
+                </div>
             </div>
-
-            {/* 글자 수 표시 */}
-            <span className="text-xs text-right" style={{ color: 'var(--color-gray-500)' }}>
-                {text.length} / 500
-            </span>
+            <div className="flex justify-end px-2">
+                <span className={`text-[9px] font-black tracking-widest uppercase transition-colors ${text.length > 450 ? 'text-[#F87171]' : 'text-white/10'}`}>
+                    {text.length} / 500
+                </span>
+            </div>
         </div>
     );
 }
