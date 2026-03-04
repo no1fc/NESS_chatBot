@@ -38,7 +38,7 @@ const TYPE_CONFIG = {
     },
 };
 
-export default function ResultCard({ result, onSelectRegion }: { result: DiagnosisResult; onSelectRegion: () => void }) {
+export default function ResultCard({ result }: { result: DiagnosisResult }) {
     const config = TYPE_CONFIG[result.type] ?? TYPE_CONFIG['2유형'];
     const IconComponent = config.icon;
     const isRestricted = result.type === '제한';
@@ -118,15 +118,7 @@ export default function ResultCard({ result, onSelectRegion }: { result: Diagnos
                 )}
 
                 <div className="space-y-4 relative z-10">
-                    {!isRestricted ? (
-                        <button
-                            className="w-full h-16 rounded-[1.5rem] bg-gradient-to-r from-[#2DD4BF] to-[#34D399] text-[#0B1120] font-black text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] active:scale-[0.98]"
-                            onClick={onSelectRegion}
-                        >
-                            <MapPin size={20} fill="currentColor" />
-                            가까운 상담 지점 찾기
-                        </button>
-                    ) : (
+                    {isRestricted && (
                         <a
                             href="https://www.work24.go.kr"
                             target="_blank"

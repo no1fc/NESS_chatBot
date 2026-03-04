@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateResponse, safeParseJSON } from '@/lib/gemini';
 import {
     buildAnalysisPrompt,
+    INFO_MESSAGE,
     INTRO_MESSAGE,
     LOCATION_STEP_MESSAGE,
     STATIC_QUESTIONS,
@@ -15,7 +16,7 @@ import {
 import { getPDFContent } from '@/lib/pdf-parser';
 
 // 챗봇 단계 타입 정의
-type ChatPhase = 'intro' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
+type ChatPhase = 'intro' | 'info' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
 
 // 선택지 타입 정의
 interface Choice {
@@ -76,6 +77,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // 첫 번째 인사 메시지 반환 (Gemini 호출 없음)
         if (phase === 'intro') {
             return NextResponse.json(INTRO_MESSAGE, { status: 200 });
+        }
+
+        // ==================== INFO 단계 ====================
+        // 국민취업지원제도 정보 메시지 반환 (Gemini 호출 없음)
+        if (phase === 'info') {
+            return NextResponse.json(INFO_MESSAGE, { status: 200 });
         }
 
         // ==================== LOCATION 단계 ====================

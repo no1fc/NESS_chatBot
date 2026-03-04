@@ -43,16 +43,31 @@ export interface DiagnosisResult {
 /** 챗봇 단계 타입 */
 export type ChatPhase = 'intro' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
 
+/** 챗봇 상태 스냅샷 (이전으로 돌아가기 기능용) */
+export interface ChatStateSnapshot {
+    messages: Message[];
+    currentStep: number;
+    phase: ChatPhase;
+    userAnswers: Record<string, string>;
+    history: Array<{ role: 'user' | 'model'; content: string }>;
+    result: DiagnosisResult | null;
+    showIncomeTable: boolean;
+}
+
 /** useChat 훅 반환값 타입 */
 export interface UseChatReturn {
     messages: Message[];
     isLoading: boolean;
     currentStep: number;
     totalSteps: number;
+    phase: ChatPhase;
+    result: DiagnosisResult | null;
     isError: boolean;
     showIncomeTable: boolean; // 중위소득 기준표 표시 여부
+    canGoBack: boolean; // 이전으로 돌아가기 가능 여부
     sendChoice: (choice: Choice) => Promise<void>;
     sendText: (text: string) => Promise<void>;
+    goBack: () => void; // 이전 대화로 돌아가기
     retry: () => Promise<void>;
     startChat: () => Promise<void>;
     resetChat: () => void;
@@ -131,6 +146,8 @@ export function useChat(): UseChatReturn {
         type: 'choice' | 'text' | 'analysis';
         data: any;
     } | null>(null);
+    // 이전 대화로 돌아가기를 위한 상태 기록
+    const [stateHistory, setStateHistory] = useState<ChatStateSnapshot[]>([]);
 
     /**
      * /api/chat 호출 공통 함수
@@ -192,11 +209,31 @@ export function useChat(): UseChatReturn {
     }, [callChatAPI]);
 
     /**
+     * 상태 스냅샷 저장 함수
+     */
+    const saveSnapshot = useCallback(() => {
+        setStateHistory((prev) => [
+            ...prev,
+            {
+                messages: [...messages],
+                currentStep,
+                phase,
+                userAnswers: { ...userAnswers },
+                history: [...history],
+                result,
+                showIncomeTable,
+            },
+        ]);
+    }, [messages, currentStep, phase, userAnswers, history, result, showIncomeTable]);
+
+    /**
      * 선택지 전송 함수 (객관식 버튼 클릭 시)
      * @param choice - 선택된 Choice 객체
      */
     const sendChoice = useCallback(async (choice: Choice) => {
         if (isLoading) return; // 로딩 중 중복 전송 방지
+
+        saveSnapshot();
 
         setIsLoading(true);
         setIsError(false);
@@ -271,6 +308,8 @@ export function useChat(): UseChatReturn {
     const sendText = useCallback(async (text: string) => {
         if (isLoading || !text.trim()) return;
 
+        saveSnapshot();
+
         setIsLoading(true);
         setIsError(false);
         setLastAction({ type: 'text', data: text });
@@ -342,6 +381,29 @@ export function useChat(): UseChatReturn {
     }, [lastAction, isLoading, sendChoice, sendText]);
 
     /**
+     * 이전 대화로 돌아가기 함수
+     */
+    const goBack = useCallback(() => {
+        if (isLoading || stateHistory.length === 0) return;
+
+        const previousState = stateHistory[stateHistory.length - 1];
+
+        // 이전 상태로 모두 복구
+        setMessages(previousState.messages);
+        setCurrentStep(previousState.currentStep);
+        setPhase(previousState.phase);
+        setUserAnswers(previousState.userAnswers);
+        setHistory(previousState.history);
+        setResult(previousState.result);
+        setShowIncomeTable(previousState.showIncomeTable);
+
+        // 복구된 상태 이후의 히스토리는 삭제
+        setStateHistory((prev) => prev.slice(0, -1));
+        setIsError(false);
+        setLastAction(null);
+    }, [isLoading, stateHistory]);
+
+    /**
      * 최종 유형 판별 분석 트리거 함수
      * 모든 질문 완료 후 analyzing phase로 전환하여 AI 판별 요청
      */
@@ -405,6 +467,7 @@ export function useChat(): UseChatReturn {
         setShowIncomeTable(false); // 기준표 초기화
         setIsError(false);
         setLastAction(null);
+        setStateHistory([]);
     }, []);
 
     return {
@@ -416,8 +479,10 @@ export function useChat(): UseChatReturn {
         result,
         isError,
         showIncomeTable,
+        canGoBack: stateHistory.length > 0,
         sendChoice,
         sendText,
+        goBack,
         retry,
         startChat,
         resetChat,

@@ -12,6 +12,7 @@ import ResultCard from '@/components/result/ResultCard';
 import BranchCard from '@/components/result/BranchCard';
 import RegionSelector from './RegionSelector';
 import { Branch } from '@/lib/db';
+import { ArrowLeft } from 'lucide-react';
 
 export default function ChatContainer() {
     const {
@@ -23,15 +24,16 @@ export default function ChatContainer() {
         result,
         isError,
         showIncomeTable,
+        canGoBack,
         sendChoice,
         sendText,
+        goBack,
         retry,
         startChat,
     } = useChat();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [branch, setBranch] = useState<Branch | null | 'loading' | 'none'>('none');
-    const [showRegionSelector, setShowRegionSelector] = useState<boolean>(false);
 
     useEffect(() => {
         startChat();
@@ -40,11 +42,10 @@ export default function ChatContainer() {
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isLoading, showRegionSelector, branch]);
+    }, [messages, isLoading, branch]);
 
     const handleRegionSelect = async (sido: string, sigungu: string) => {
         setBranch('loading');
-        setShowRegionSelector(false);
 
         try {
             const response = await fetch(
@@ -63,6 +64,18 @@ export default function ChatContainer() {
         }
     };
 
+    useEffect(() => {
+        if (phase === 'result' && branch === 'none' && result && result.type !== '제한') {
+            const firstUserMessage = messages.find((m) => m.role === 'user');
+            if (firstUserMessage) {
+                const parts = firstUserMessage.content.split(' ');
+                if (parts.length >= 2) {
+                    handleRegionSelect(parts[0], parts.slice(1).join(' '));
+                }
+            }
+        }
+    }, [phase, result, branch, messages]);
+
     const lastAIMessage = [...messages].reverse().find((m) => m.role === 'ai');
     const currentChoices = lastAIMessage?.choices ?? [];
 
@@ -79,11 +92,24 @@ export default function ChatContainer() {
         currentChoices.length > 0;
 
     return (
-        <div className="flex flex-col h-full bg-transparent">
-            {/* 진행률 바 (상단 고정 - 헤더 아래) */}
+        <div className="flex flex-col h-full bg-transparent relative">
+            {/* 진행률 바 & 상단 컨트롤 (상단 고정 - 헤더 아래) */}
             <div className="sticky top-[80px] z-10">
                 {(phase === 'questioning' || phase === 'analyzing' || phase === 'result') && (
                     <ProgressBar current={phase === 'questioning' ? currentStep : totalSteps} total={totalSteps} />
+                )}
+
+                {/* 이전으로 돌아가기 버튼 (진행률 바 아래에 위치) */}
+                {canGoBack && !isLoading && (
+                    <div className="absolute left-6 top-8 z-20">
+                        <button
+                            onClick={goBack}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            이전
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -111,26 +137,18 @@ export default function ChatContainer() {
                             </div>
                         )}
 
-                        {phase === 'result' && result && !showRegionSelector && branch === 'none' && (
+                        {phase === 'result' && result && (
                             <div className="animate-reveal-up">
-                                <ResultCard
-                                    result={result}
-                                    onSelectRegion={() => setShowRegionSelector(true)}
-                                />
+                                <ResultCard result={result} />
                             </div>
                         )}
 
-                        {(isRegionStep || showRegionSelector) && (
+                        {isRegionStep && (
                             <div className="animate-reveal-up pb-10">
                                 <RegionSelector
                                     onSelect={(sido, sigungu) => {
-                                        if (isRegionStep) {
-                                            // 질문 단계에서의 지역 선택: useChat의 sendText 호출 (또는 전용 함수)
-                                            sendText(`${sido} ${sigungu}`);
-                                        } else {
-                                            // 결과 단계에서의 지역 선택: 지점 검색 실행
-                                            handleRegionSelect(sido, sigungu);
-                                        }
+                                        // 질문 단계에서의 지역 선택: useChat의 sendText 호출
+                                        sendText(`${sido} ${sigungu}`);
                                     }}
                                     disabled={isLoading}
                                 />

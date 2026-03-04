@@ -9,10 +9,23 @@ interface RegionSelectorProps {
 }
 
 const SIDO_LIST = [
-    '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시',
-    '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원특별자치도',
-    '충청북도', '충청남도', '전북특별자치도', '전라남도', '경상북도',
-    '경상남도', '제주특별자치도',
+    '서울특별시',
+    '부산광역시',
+    '대구광역시',
+    '인천광역시',
+    '광주광역시',
+    '대전광역시',
+    '울산광역시',
+    '세종특별자치시',
+    '경기도',
+    '강원특별자치도',
+    '충청북도',
+    '충청남도',
+    '전북특별자치도',
+    '전라남도',
+    '경상북도',
+    '경상남도',
+    '제주특별자치도',
 ];
 
 const SIGUNGU_MAP: Record<string, string[]> = {
@@ -54,7 +67,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
     const sigunguList = selectedSido ? SIGUNGU_MAP[selectedSido] || [] : [];
 
     return (
-        <div className="glass-panel rounded-[2rem] p-8 my-6 animate-reveal-up max-w-sm border border-white/10">
+        <div className="mx-auto glass-panel rounded-[2rem] p-8 my-6 animate-reveal-up max-w-sm border border-white/10">
             <div className="flex items-center gap-3 mb-8">
                 <MapPin className="text-[#2DD4BF]" size={18} />
                 <h3 className="text-white font-black text-xs uppercase tracking-[0.2em] opacity-50">

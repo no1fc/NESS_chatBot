@@ -34,7 +34,7 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
                     </div>
 
                     <a
-                        href={`https://www.work24.go.kr/cm/c/d/cmCdPopup.do?cmCdDtlCd=SE002&${utmParams}`}
+                        href={`https://www.work24.go.kr/ua/z/z/1100/selectOperInst.do?currentPageNo=1&recordCountPerPage=10&srchType=&srchRegionCd=&srchBizSecd=K&srchRegionDetailCd=&srchKeyword=%EC%9E%A1%EB%AA%A8%EC%95%84`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10 group relative z-10"
