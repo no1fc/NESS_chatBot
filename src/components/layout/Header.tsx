@@ -8,6 +8,11 @@ export default function Header() {
     const pathname = usePathname();
     const isChatPage = pathname === '/chat';
 
+    // 관리자 페이지에서는 상단 헤더 숨김
+    if (pathname.startsWith('/admin')) {
+        return null;
+    }
+
     return (
         <header className="sticky-header">
             <div className="wide-container h-[80px] flex justify-between items-center">
