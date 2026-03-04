@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSettings, updateSetting } from '@/lib/db';
+import { getPromptCategories } from '@/lib/prompts';
 
 /**
  * GET: 모든 시스템 설정 조회
@@ -8,8 +9,23 @@ import { getAllSettings, updateSetting } from '@/lib/db';
 export async function GET() {
     try {
         const settings = getAllSettings();
+        const promptCategories = getPromptCategories();
 
-        // API  쿡 Ű
+        // DB에 저장되지 않은 설정들(Default 값)을 클라이언트에 제공
+        promptCategories.forEach(cat => {
+            if (!settings[cat.key] || settings[cat.key].trim() === '') {
+                // 각 키에 해당하는 getter 함수들을 통해 기본값을 가져옴
+                if (cat.key === 'system_prompt') settings[cat.key] = require('@/lib/prompts').DEFAULT_SYSTEM_PROMPT;
+                else if (cat.key === 'pdf_ness_info') settings[cat.key] = require('@/lib/prompts').DEFAULT_PDF_NESS_INFO;
+                else if (cat.key === 'median_income_table') settings[cat.key] = require('@/lib/prompts').DEFAULT_MEDIAN_INCOME_TABLE;
+                else if (cat.key === 'score_table') settings[cat.key] = require('@/lib/prompts').DEFAULT_SCORE_TABLE;
+                else if (cat.key === 'static_questions') settings[cat.key] = JSON.stringify(require('@/lib/prompts').getStaticQuestions());
+                else if (cat.key === 'intro_message') settings[cat.key] = JSON.stringify([require('@/lib/prompts').getIntroMessage()]);
+                else if (cat.key === 'info_message') settings[cat.key] = JSON.stringify([require('@/lib/prompts').getInfoMessage()]);
+            }
+        });
+
+        // API 키 마스킹
         if (settings['gemini_api_key']) {
             const key = settings['gemini_api_key'];
             // 첫 6자리와 마지막 4자리만 노출
@@ -20,7 +36,7 @@ export async function GET() {
             }
         }
 
-        return NextResponse.json({ success: true, settings });
+        return NextResponse.json({ success: true, settings, promptCategories });
     } catch (error) {
         console.error('Settings GET API 오류:', error);
         return NextResponse.json({ success: false, error: '설정 정보를 불러오는데 실패했습니다.' }, { status: 500 });
