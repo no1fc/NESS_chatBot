@@ -51,7 +51,7 @@ export function getDB(): Database.Database {
     // DB 파일 경로 설정 (환경변수 또는 기본값)
     const dbPath = process.env.DATABASE_PATH
         ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
-        : path.resolve(process.cwd(), 'data', 'branches.db');
+        : path.resolve(process.cwd(), 'data', 'mainDB.db');
 
     // DB 파일 디렉토리 자동 생성
     const dbDir = path.dirname(dbPath);

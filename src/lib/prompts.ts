@@ -1,15 +1,17 @@
 /**
  * AI 시스템 프롬프트 및 템플릿 모음
  * 국민취업지원제도 자가진단 챗봇의 모든 프롬프트를 중앙 관리.
- * 프롬프트 수정은 이 파일에서만 수행.
+ * DB 연동으로 인해 상수들을 함수로 래핑합니다.
  */
 
+import { getSetting } from '@/lib/db';
 import { getNESSInfoPDFContent } from "./pdf-NESS-info";
 
 // ====================================
-// 기준 중위소득 테이블 (2026년 기준)
+// 기본 설정값 (Fallback용 상수)
 // ====================================
-export const MEDIAN_INCOME_TABLE = `
+
+export const DEFAULT_MEDIAN_INCOME_TABLE = `
 [2026년 기준 중위소득]
 | 가구원 수 | 100% | 60% (1유형 요건심사) | 120% (1유형 청년특례) |
 |---------|------|-------------------|------------------|
@@ -22,10 +24,7 @@ export const MEDIAN_INCOME_TABLE = `
 | 7인가구 | 9,515,150원 | 5,709,090원 | 11,418,180원 |
 `;
 
-// ====================================
-// 선발형 가점/감점 테이블 (2026 기준 별표 3)
-// ====================================
-export const SCORE_TABLE = `
+export const DEFAULT_SCORE_TABLE = `
 [선발형 구직촉진수당 수급자격 기준 합산 점수]
 1. 가구단위 월평균 총소득
 - 기준 중위소득 40% 이하: 비경활 40점, 청년특례 50점
@@ -49,15 +48,12 @@ export const SCORE_TABLE = `
 5. 유사제도 수혜: 1년 이내 10점 감점, 1~2년 이내 5점 감점
 `;
 
-// ====================================
-// 정적 질문 시나리오 (AI 없이 순차적으로 진행)
-// ====================================
-export const STATIC_QUESTIONS = [
+export const DEFAULT_STATIC_QUESTIONS = [
   {
     id: 'region',
     message: '1. 거주 지역 확인\n가까운 잡모아 지점을 안내해 드리기 위해 거주하시는 지역을 선택해주세요.',
     type: 'region',
-    choices: [], // RegionSelector가 대신 렌더링됨
+    choices: [],
     showIncomeTable: false
   },
   {
@@ -137,20 +133,93 @@ export const STATIC_QUESTIONS = [
   }
 ];
 
+export const DEFAULT_LOCATION_STEP_MESSAGE = {
+  message: '📍 거의 다 왔습니다! 가까운 잡모아 지점을 안내해 드리기 위해 거주 지역을 알려주세요.',
+  phase: 'location' as const,
+};
+
+export const DEFAULT_INTRO_MESSAGE = {
+  message: '안녕하세요! 👋 저는 국민취업지원제도 자가진단 AI입니다.\n약 3~5분의 간단한 질문으로 내가 지원받을 수 있는 유형과 수당을 확인할 수 있어요.\n⚠️ 이 진단은 자가진단 목적이며, 실제 결과는 고용센터 심사에 따라 달라질 수 있습니다.\n시작할까요?',
+  choices: [
+    { id: 'start', label: '✅ 네, 시작하겠습니다!', value: 'start' },
+    { id: 'info', label: 'ℹ️ 국민취업지원제도란?', value: 'info' },
+  ],
+  phase: 'intro' as const,
+  currentStep: 0,
+  totalSteps: 8,
+};
+
+export const DEFAULT_INFO_MESSAGE_CHOICES = [
+  { id: 'start', label: '✅ 네, 시작하겠습니다!', value: 'start' },
+];
+
+export const DEFAULT_SYSTEM_PROMPT = `당신은 국민취업지원제도 유형 판별 전문 AI입니다.`;
+
+
+// ====================================
+// DB 연동 Getter 함수 모음
+// ====================================
+
+export function getMedianIncomeTable(): string {
+  const val = getSetting('median_income_table');
+  return val || DEFAULT_MEDIAN_INCOME_TABLE;
+}
+
+export function getScoreTable(): string {
+  const val = getSetting('score_table');
+  return val || DEFAULT_SCORE_TABLE;
+}
+
+export function getStaticQuestions(): any[] {
+  const val = getSetting('static_questions');
+  try { return val ? JSON.parse(val) : DEFAULT_STATIC_QUESTIONS; }
+  catch (e) { return DEFAULT_STATIC_QUESTIONS; }
+}
+
+export function getLocationStepMessage(): any {
+  const val = getSetting('location_step_message');
+  try { return val ? JSON.parse(val) : DEFAULT_LOCATION_STEP_MESSAGE; }
+  catch (e) { return DEFAULT_LOCATION_STEP_MESSAGE; }
+}
+
+export function getIntroMessage(): any {
+  const val = getSetting('intro_message');
+  try { return val ? JSON.parse(val) : DEFAULT_INTRO_MESSAGE; }
+  catch (e) { return DEFAULT_INTRO_MESSAGE; }
+}
+
+export async function getInfoMessage(): Promise<any> {
+  const val = getSetting('info_message');
+  try {
+    if (val) return JSON.parse(val);
+  } catch (e) {
+    // parsing failed, fallback
+  }
+
+  // DB에 저장된 info_message가 없다면 pdf-NESS-info의 텍스트를 불러와 기본 객체 반환
+  const infoContent = await getNESSInfoPDFContent();
+  return {
+    message: infoContent,
+    choices: DEFAULT_INFO_MESSAGE_CHOICES,
+    phase: 'info' as const,
+    currentStep: 1,
+    totalSteps: 8,
+  };
+}
+
+
 // ====================================
 // 최종 판별 분석 프롬프트
 // ====================================
-/**
- * 최종 유형 판별 분석 프롬프트 생성 함수
- * @param pdfContent - 규정 PDF 텍스트
- * @param userAnswers - 사용자가 응답한 QA 데이터 (JSON 문자열)
- * @returns 완성된 분석 프롬프트 문자열
- */
+
 export function buildAnalysisPrompt(
   pdfContent: string,
-  userAnswers: Record<string, string>
+  userAnswers: Record<string, string>,
+  customSystemPrompt?: string | null
 ): string {
-  return `당신은 국민취업지원제도 유형 판별 전문 AI입니다.
+  const basePrompt = customSystemPrompt || DEFAULT_SYSTEM_PROMPT;
+
+  return `${basePrompt}
 아래 [규정 문서], [기준 중위소득표], [점수표]와 [사용자 수집 데이터]를 종합하여
 해당 사용자의 참여 유형을 정확하게 판별합니다.
 
@@ -158,10 +227,10 @@ export function buildAnalysisPrompt(
 ${pdfContent}
 
 [기준 중위소득표]
-${MEDIAN_INCOME_TABLE}
+${getMedianIncomeTable()}
 
 [선발형 점수표]
-${SCORE_TABLE}
+${getScoreTable()}
 
 [사용자 수집 데이터]
 ${JSON.stringify(userAnswers, null, 2)}
@@ -198,48 +267,3 @@ ${JSON.stringify(userAnswers, null, 2)}
 }
 `;
 }
-
-// ====================================
-// 지역 선택 단계 프롬프트 데이터 (정적)
-// ====================================
-/**
- * 지역 선택 단계에서 AI가 출력하는 메시지
- * Gemini 호출 없이 정적으로 반환
- */
-export const LOCATION_STEP_MESSAGE = {
-  message: '📍 거의 다 왔습니다! 가까운 잡모아 지점을 안내해 드리기 위해 거주 지역을 알려주세요.',
-  phase: 'location' as const,
-};
-
-// ====================================
-// 인트로 메시지 (정적)
-// ====================================
-/**
- * 챗봇 시작 시 첫 번째로 표시되는 AI 메시지 (정적, API 호출 없음)
- */
-export const INTRO_MESSAGE = {
-  message: '안녕하세요! 👋 저는 국민취업지원제도 자가진단 AI입니다.\n약 3~5분의 간단한 질문으로 내가 지원받을 수 있는 유형과 수당을 확인할 수 있어요.\n⚠️ 이 진단은 자가진단 목적이며, 실제 결과는 고용센터 심사에 따라 달라질 수 있습니다.\n시작할까요?',
-  choices: [
-    { id: 'start', label: '✅ 네, 시작하겠습니다!', value: 'start' },
-    { id: 'info', label: 'ℹ️ 국민취업지원제도란?', value: 'info' },
-  ],
-  phase: 'intro' as const,
-  currentStep: 0,
-  totalSteps: 8,
-};
-
-// ====================================
-// 국민취업지원제도 정보 메시지 (정적)
-// ====================================
-/**
- * 국민취업지원제도가 어떤건지 알려주는 내용을 출력
- */
-export const INFO_MESSAGE = {
-  message: getNESSInfoPDFContent(),
-  choices: [
-    { id: 'start', label: '✅ 네, 시작하겠습니다!', value: 'start' },
-  ],
-  phase: 'info' as const,
-  currentStep: 1,
-  totalSteps: 8,
-};

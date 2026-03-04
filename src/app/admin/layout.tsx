@@ -19,9 +19,9 @@ const SIDEBAR_ITEMS = [
     { name: '대시보드', href: '/admin', icon: LayoutDashboard },
     { name: '지점 등록', href: '/admin/branches', icon: Building2 },
     { name: '관리자 지정', href: '/admin/users', icon: Users },
-    { name: 'API 설정', href: '/admin/settings/api', icon: KeyRound },
+    { name: 'API 설정', href: '/admin/settings/gemini', icon: KeyRound },
     { name: '프롬프트 관리', href: '/admin/settings/prompts', icon: MessageSquareText },
-    { name: 'PDF 설정', href: '/admin/settings/pdf', icon: FileText },
+    { name: 'PDF 설정', href: '/admin/settings/pdf-info', icon: FileText },
 ];
 
 export default function AdminLayout({

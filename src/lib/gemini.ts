@@ -7,33 +7,7 @@
 
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 
-// Gemini API 키 검증 (서버 사이드 전용)
-if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY 환경변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.');
-}
-
-// Google Generative AI 클라이언트 싱글톤 초기화
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// 챗봇용 Gemini 모델 설정 (Free Tier 호환 경량 모델)
-const chatModel: GenerativeModel = genAI.getGenerativeModel({
-    model: 'gemini-flash-lite-latest',
-    generationConfig: {
-        temperature: 0.1,       // 낮은 온도 값 = 일관되고 정확한 답변
-        maxOutputTokens: 1024,  // 응답 토큰 절약
-        responseMimeType: 'application/json', // JSON 형식 응답 강제
-    },
-});
-
-// 분석용 모델 (판별 결과 생성 시 사용)
-const analysisModel: GenerativeModel = genAI.getGenerativeModel({
-    model: 'gemini-flash-lite-latest',
-    generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 2048, // 분석 결과는 더 긴 응답 허용
-        responseMimeType: 'application/json',
-    },
-});
+import { getSetting } from '@/lib/db';
 
 /**
  * Gemini 모델에 메시지를 전송하고 응답을 받는 함수
@@ -48,8 +22,25 @@ export async function generateResponse(
     userMessage: string,
     useAnalysisModel: boolean = false
 ): Promise<string> {
-    // 사용할 모델 선택 (일반 대화 vs 최종 분석)
-    const model = useAnalysisModel ? analysisModel : chatModel;
+    // DB에서 최신 API 키 가져오기 (없으면 환경변수 폴백)
+    const apiKey = getSetting('gemini_api_key') || process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        throw new Error('Gemini API 키가 설정되지 않았습니다.');
+    }
+
+    // Google Generative AI 클라이언트 초기화
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    // 사용할 모델 선택 및 설정
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-flash-lite-latest',
+        generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: useAnalysisModel ? 2048 : 1024,
+            responseMimeType: 'application/json',
+        },
+    });
 
     // 시스템 프롬프트와 사용자 메시지를 하나의 프롬프트로 결합
     const fullPrompt = `${systemPrompt}\n\n---\n\n${userMessage}`;

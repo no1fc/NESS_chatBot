@@ -13,23 +13,31 @@ let pdfTextCache: string | null = null;
  * PDF 파싱 대신 사전 정의된 텍스트를 직접 반환합니다.
  * @returns 국민취업지원제도란 어떤 건지 텍스트 반환 문자열
  */
-export async function getNESSInfoPDFContent(): Promise<string> {
-    // 캐시가 있으면 즉시 반환 (반복 생성 방지)
-    if (pdfTextCache) {
-        return pdfTextCache;
-    }
+import { getSetting } from '@/lib/db';
 
-    // 텍스트를 캐시에 저장 후 반환
-    pdfTextCache = getNESSInfoRegulationContent();
-    console.log(`텍스트 로드 완료: ${pdfTextCache.length}자`);
-    return pdfTextCache;
+export async function getNESSInfoPDFContent(): Promise<string> {
+   // DB에서 커스텀 안내 텍스트 가져오기
+   const customInfo = getSetting('pdf_ness_info_content');
+   if (customInfo) {
+      return customInfo;
+   }
+
+   // 캐시가 있으면 즉시 반환 (반복 생성 방지)
+   if (pdfTextCache) {
+      return pdfTextCache;
+   }
+
+   // 텍스트를 캐시에 저장 후 반환
+   pdfTextCache = getNESSInfoRegulationContent();
+   console.log(`기본 텍스트 로드 완료: ${pdfTextCache.length}자`);
+   return pdfTextCache;
 }
 
 /**
  * 국민취업지원제도란 어떤 건지 텍스트 반환
  */
 function getNESSInfoRegulationContent(): string {
-    return `[2026년 국민취업지원제도 안내]
+   return `[2026년 국민취업지원제도 안내]
 
 국민취업지원제도는 근로 능력과 구직 의사가 있음에도 구조적, 마찰적 요인으로 인해 취업에 어려움을 겪는 국민에게 통합적인 맞춤형 취업지원서비스를 제공하고, 저소득층에게는 생계안정을 위한 구직촉진수당을 결합하여 지원하는 제도입니다. 
 

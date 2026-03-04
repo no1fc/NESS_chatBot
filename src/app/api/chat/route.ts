@@ -8,10 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateResponse, safeParseJSON } from '@/lib/gemini';
 import {
     buildAnalysisPrompt,
-    INFO_MESSAGE,
-    INTRO_MESSAGE,
-    LOCATION_STEP_MESSAGE,
-    STATIC_QUESTIONS,
+    getInfoMessage,
+    getIntroMessage,
+    getLocationStepMessage,
+    getStaticQuestions,
 } from '@/lib/prompts';
 import { getPDFContent } from '@/lib/pdf-parser';
 
@@ -76,29 +76,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // ==================== INTRO 단계 ====================
         // 첫 번째 인사 메시지 반환 (Gemini 호출 없음)
         if (phase === 'intro') {
-            return NextResponse.json(INTRO_MESSAGE, { status: 200 });
+            return NextResponse.json(getIntroMessage(), { status: 200 });
         }
 
         // ==================== INFO 단계 ====================
         // 국민취업지원제도 정보 메시지 반환 (Gemini 호출 없음)
         if (phase === 'info') {
-            return NextResponse.json(INFO_MESSAGE, { status: 200 });
+            return NextResponse.json(await getInfoMessage(), { status: 200 });
         }
 
         // ==================== LOCATION 단계 ====================
         // 지역 선택 안내 메시지 반환 (Gemini 호출 없음)
         if (phase === 'location') {
-            return NextResponse.json(LOCATION_STEP_MESSAGE, { status: 200 });
+            return NextResponse.json(getLocationStepMessage(), { status: 200 });
         }
 
         // ==================== ANALYZING 단계 ====================
         // 수집된 QA 데이터로 최종 유형 판별
         if (phase === 'analyzing') {
+            // DB에서 커스텀 시스템 프롬프트 로드
+            const { getSetting } = await import('@/lib/db');
+            const customSystemPrompt = getSetting('system_prompt');
+
             // PDF 규정 문서 텍스트 로드
             const pdfContent = await getPDFContent();
 
             // 분석 프롬프트 생성 (규정 + 사용자 답변 결합)
-            const analysisPrompt = buildAnalysisPrompt(pdfContent, userAnswers);
+            const analysisPrompt = buildAnalysisPrompt(pdfContent, userAnswers, customSystemPrompt);
 
             // Gemini API 호출 (분석 모델 사용)
             const rawResponse = await generateResponse(
@@ -138,21 +142,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // 정적 질문 반환 (프론트엔드에서 넘겨준 currentStep 기준)
         // currentStep은 질문 완료 후 반환하는 값이므로,
         // 클라이언트에서 0을 보내면 0번 인덱스, 1을 보내면 1번 인덱스를 줍니다.
+        const staticQuestions = getStaticQuestions();
         const questionIndex = currentStep;
 
-        if (questionIndex >= STATIC_QUESTIONS.length) {
+        if (questionIndex >= staticQuestions.length) {
             // 모든 정적 질문이 끝남. 프론트엔드가 analyzing 단계로 넘어가도록 유도
             return NextResponse.json({
                 message: '모든 질문이 완료되었습니다. 분석을 시작합니다...',
                 choices: [],
                 phase: 'questioning', // 아직 훅에서 triggerAnalysis를 통해 넘어갈 수 있도록
                 currentStep: questionIndex + 1,
-                totalSteps: STATIC_QUESTIONS.length,
+                totalSteps: staticQuestions.length,
                 showIncomeTable: false,
             } as ChatResponse);
         }
 
-        const nextQuestion = STATIC_QUESTIONS[questionIndex];
+        const nextQuestion = staticQuestions[questionIndex];
 
         // 정상 응답 반환
         return NextResponse.json({
@@ -160,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             choices: nextQuestion.choices,
             phase: 'questioning',
             currentStep: questionIndex + 1,
-            totalSteps: STATIC_QUESTIONS.length,
+            totalSteps: staticQuestions.length,
             showIncomeTable: nextQuestion.showIncomeTable,
         } as ChatResponse);
 

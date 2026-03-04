@@ -13,7 +13,15 @@ let pdfTextCache: string | null = null;
  * PDF 파싱 대신 사전 정의된 규정 텍스트를 직접 반환합니다.
  * @returns 규정 텍스트 문자열
  */
+import { getSetting } from '@/lib/db';
+
 export async function getPDFContent(): Promise<string> {
+   // DB에서 커스텀 규정 텍스트 가져오기
+   const customRegulation = getSetting('pdf_regulation_content');
+   if (customRegulation) {
+      return customRegulation;
+   }
+
    // 캐시가 있으면 즉시 반환 (반복 생성 방지)
    if (pdfTextCache) {
       return pdfTextCache;
@@ -21,7 +29,7 @@ export async function getPDFContent(): Promise<string> {
 
    // 규정 텍스트를 캐시에 저장 후 반환
    pdfTextCache = getRegulationContent();
-   console.log(`규정 텍스트 로드 완료: ${pdfTextCache.length}자`);
+   console.log(`기본 규정 텍스트 로드 완료: ${pdfTextCache.length}자`);
    return pdfTextCache;
 }
 
