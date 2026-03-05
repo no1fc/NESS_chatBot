@@ -3,9 +3,9 @@ import { updateAdminPassword, updateAdminRole, deleteAdmin } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
 interface RouteContext {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 // 특정 관리자 계정 권한/비밀번호 변경
@@ -14,7 +14,8 @@ export async function PUT(
     { params }: RouteContext
 ) {
     try {
-        const id = parseInt(params.id, 10);
+        const { id: idParam } = await params;
+        const id = parseInt(idParam, 10);
 
         if (isNaN(id)) {
             return NextResponse.json({ error: '유효하지 않은 관리자 ID입니다.' }, { status: 400 });
@@ -60,7 +61,8 @@ export async function DELETE(
     { params }: RouteContext
 ) {
     try {
-        const id = parseInt(params.id, 10);
+        const { id: idParam } = await params;
+        const id = parseInt(idParam, 10);
 
         if (isNaN(id)) {
             return NextResponse.json({ error: '유효하지 않은 관리자 ID입니다.' }, { status: 400 });

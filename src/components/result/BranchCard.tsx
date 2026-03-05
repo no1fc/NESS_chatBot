@@ -107,13 +107,13 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
                         className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10"
                     >
                         <Phone size={20} />
-                        전화 상담 예약
+                        전화 상담
                     </a>
                 </div>
 
                 <p className="text-center text-[10px] text-white/10 mt-10 leading-relaxed font-sans font-medium">
                     지점별 상황에 따라 대기 시간이 발생할 수 있습니다.<br />
-                    전문 상담원의 안내는 전액 무료로 제공됩니다.
+                    전문 상담원의 안내는 무료로 제공됩니다.
                 </p>
             </div>
         </div>

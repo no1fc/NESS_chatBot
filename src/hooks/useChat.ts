@@ -65,6 +65,7 @@ export interface UseChatReturn {
     isError: boolean;
     showIncomeTable: boolean; // 중위소득 기준표 표시 여부
     canGoBack: boolean; // 이전으로 돌아가기 가능 여부
+    userAnswers: Record<string, string>; // 사용자 답변 모음
     sendChoice: (choice: Choice) => Promise<void>;
     sendText: (text: string) => Promise<void>;
     goBack: () => void; // 이전 대화로 돌아가기
@@ -480,6 +481,7 @@ export function useChat(): UseChatReturn {
         isError,
         showIncomeTable,
         canGoBack: stateHistory.length > 0,
+        userAnswers,
         sendChoice,
         sendText,
         goBack,

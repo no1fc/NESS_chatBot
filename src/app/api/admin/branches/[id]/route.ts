@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { updateBranch, deleteBranch } from '@/lib/db';
 
 interface RouteContext {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 // 특정 지점 정보 수정
@@ -13,7 +13,8 @@ export async function PUT(
     { params }: RouteContext
 ) {
     try {
-        const id = parseInt(params.id, 10);
+        const { id: idParam } = await params;
+        const id = parseInt(idParam, 10);
 
         if (isNaN(id)) {
             return NextResponse.json({ error: '유효하지 않은 지점 ID입니다.' }, { status: 400 });
@@ -48,7 +49,8 @@ export async function DELETE(
     { params }: RouteContext
 ) {
     try {
-        const id = parseInt(params.id, 10);
+        const { id: idParam } = await params;
+        const id = parseInt(idParam, 10);
 
         if (isNaN(id)) {
             return NextResponse.json({ error: '유효하지 않은 지점 ID입니다.' }, { status: 400 });
