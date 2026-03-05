@@ -33,6 +33,7 @@ export default function ChatContainer() {
     } = useChat();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const resultRef = useRef<HTMLDivElement>(null);
     const [branch, setBranch] = useState<Branch | null | 'loading' | 'none'>('none');
 
     useEffect(() => {
@@ -41,8 +42,13 @@ export default function ChatContainer() {
     }, []);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isLoading, branch]);
+        // 결과 화면일 경우 결과 카드 상단으로 스크롤 고정
+        if (phase === 'result' && resultRef.current) {
+            resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isLoading, branch, phase]);
 
     const handleRegionSelect = async (sido: string, sigungu: string) => {
         setBranch('loading');
@@ -99,8 +105,8 @@ export default function ChatContainer() {
                     <ProgressBar current={phase === 'questioning' ? currentStep : totalSteps} total={totalSteps} />
                 )}
 
-                {/* 이전으로 돌아가기 버튼 (진행률 바 아래에 위치) */}
-                {canGoBack && !isLoading && (
+                {/* 이전으로 돌아가기 버튼 (진행률 바 아래에 위치 - result 단계에서는 숨김) */}
+                {canGoBack && !isLoading && phase !== 'result' && (
                     <div className="absolute left-6 top-8 z-20">
                         <button
                             onClick={goBack}
@@ -138,7 +144,7 @@ export default function ChatContainer() {
                         )}
 
                         {phase === 'result' && result && (
-                            <div className="animate-reveal-up">
+                            <div className="animate-reveal-up" ref={resultRef}>
                                 <ResultCard result={result} />
                             </div>
                         )}
