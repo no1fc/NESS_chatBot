@@ -403,10 +403,41 @@ export default function BranchesManagementPage() {
 function MapPreview({ address, latitude, longitude }: { address: string, latitude: string, longitude: string }) {
     const mapRef = React.useRef<HTMLDivElement>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
-    const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
+    const [apiKeys, setApiKeys] = useState<string[]>([]);
+    const [keyIndex, setKeyIndex] = useState<number>(0);
+
+    // DB에서 카카오 API 키 가져오기
+    useEffect(() => {
+        const fetchApiKey = async () => {
+            try {
+                // 클라이언트 사이드 지도 렌더링을 위해 사용할 평문 API Key 요청
+                const res = await fetch('/api/public/kakao-key');
+                const data = await res.json();
+
+                if (data.success && data.apiKeys) {
+                    setApiKeys(data.apiKeys);
+                } else if (data.success && data.apiKey) {
+                    setApiKeys([data.apiKey]);
+                }
+            } catch (e) {
+                console.error("Failed to fetch Kakao Map API keys:", e);
+            }
+        };
+        fetchApiKey();
+    }, []);
+
+    const activeApiKeys = apiKeys.length > 0 ? apiKeys : (process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY ? [process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY] : []);
+    const activeApiKey = activeApiKeys[keyIndex] || null;
+
+    // 1) 이미 로드되어 있는 경우를 대비한 체크
+    useEffect(() => {
+        if (window.kakao && window.kakao.maps) {
+            setIsMapLoaded(true);
+        }
+    }, [activeApiKey]);
 
     useEffect(() => {
-        if (!isMapLoaded || !window.kakao || !window.kakao.maps) return;
+        if (!activeApiKey || !isMapLoaded || !window.kakao || !window.kakao.maps) return;
 
         window.kakao.maps.load(() => {
             if (!mapRef.current) return;
@@ -439,29 +470,39 @@ function MapPreview({ address, latitude, longitude }: { address: string, latitud
                 });
             }
         });
-    }, [isMapLoaded, address, latitude, longitude]);
+    }, [activeApiKey, isMapLoaded, address, latitude, longitude]);
 
     return (
         <div className="w-full h-48 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden relative">
-            {apiKey && (
-                <Script
-                    strategy="lazyOnload"
-                    src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`}
-                    onLoad={() => setIsMapLoaded(true)}
-                />
+            {activeApiKey ? (
+                <>
+                    <Script
+                        strategy="afterInteractive"
+                        src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${activeApiKey}&libraries=services&autoload=false`}
+                        onLoad={() => setIsMapLoaded(true)}
+                        onReady={() => setIsMapLoaded(true)}
+                        onError={() => {
+                            if (activeApiKeys.length > 0 && keyIndex < activeApiKeys.length - 1) {
+                                console.warn(`[Map Preview] Kakao Map API key ${keyIndex + 1} failed. Retrying with next key...`);
+                                setKeyIndex(idx => idx + 1);
+                            } else {
+                                console.error('카카오맵을 불러오는데 실패했습니다.');
+                            }
+                        }}
+                    />
+                    <div ref={mapRef} className="w-full h-full" />
+                </>
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                    카카오맵 API 키가 설정되지 않았습니다. (.env.local 확인 혹은 시스템 설정 확인)
+                </div>
             )}
-            <div ref={mapRef} className="w-full h-full" />
 
             {/* 로딩 표시 또는 안내 문구 오버레이 */}
-            {!isMapLoaded && apiKey && (
+            {activeApiKey && !isMapLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 z-10">
                     <Loader2 size={20} className="text-gray-400 animate-spin mr-2" />
                     <span className="text-gray-500 text-sm">지도 로딩 중...</span>
-                </div>
-            )}
-            {!apiKey && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-400 text-sm z-10">
-                    카카오맵 API 키가 설정되지 않았습니다.
                 </div>
             )}
             {isMapLoaded && !address && (!latitude || !longitude) && (

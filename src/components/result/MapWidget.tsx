@@ -19,9 +19,37 @@ export default function MapWidget({ branch }: MapWidgetProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [apiKeys, setApiKeys] = useState<string[]>([]);
+    const [keyIndex, setKeyIndex] = useState<number>(0);
 
-    // KAKAO API KEY
-    const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
+    // KAKAO API KEY: DB/서버에서 관리하는 통합 예비 키 배열 호출
+    useEffect(() => {
+        const fetchApiKey = async () => {
+            try {
+                const res = await fetch('/api/public/kakao-key');
+                const data = await res.json();
+
+                if (data.success && data.apiKeys) {
+                    setApiKeys(data.apiKeys);
+                } else if (data.success && data.apiKey) {
+                    setApiKeys([data.apiKey]);
+                }
+            } catch (e) {
+                console.error("Failed to fetch Kakao Map API keys:", e);
+            }
+        };
+        fetchApiKey();
+    }, []);
+
+    const activeApiKeys = apiKeys.length > 0 ? apiKeys : (process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY ? [process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY] : []);
+    const apiKey = activeApiKeys[keyIndex] || null;
+
+    // 1) 이미 로드되어 있는 경우를 대비한 체크
+    useEffect(() => {
+        if (window.kakao && window.kakao.maps) {
+            setIsMapLoaded(true);
+        }
+    }, [apiKey]);
 
     useEffect(() => {
         if (!branch || !isMapLoaded || !window.kakao || !window.kakao.maps) return;
@@ -77,7 +105,7 @@ export default function MapWidget({ branch }: MapWidgetProps) {
             });
         });
 
-    }, [branch, isMapLoaded]);
+    }, [apiKey, branch, isMapLoaded]);
 
     if (!branch) {
         return (
@@ -103,7 +131,15 @@ export default function MapWidget({ branch }: MapWidgetProps) {
                     strategy="afterInteractive"
                     src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`}
                     onLoad={() => setIsMapLoaded(true)}
-                    onError={() => setError('카카오맵을 불러오는데 실패했습니다.')}
+                    onReady={() => setIsMapLoaded(true)}
+                    onError={() => {
+                        if (activeApiKeys.length > 0 && keyIndex < activeApiKeys.length - 1) {
+                            console.warn(`[Map Widget] Kakao Map API key ${keyIndex + 1} failed. Retrying with next key...`);
+                            setKeyIndex(idx => idx + 1);
+                        } else {
+                            setError('카카오맵을 불러오는데 실패했습니다. 예비 키가 소진되었거나 도메인 제약을 확인해주세요.');
+                        }
+                    }}
                 />
             )}
 

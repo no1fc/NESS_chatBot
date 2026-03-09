@@ -6,8 +6,8 @@ import bcrypt from 'bcryptjs';
 export const dynamic = 'force-dynamic'; // 정적 렌더링 방지 및 빌드 시점 DB 접근 오류 회피
 
 // 최초 환경 변수에서 기본 관리자 정보 가져오기 (DB 초기화용 폴백)
-const FALLBACK_ADMIN_ID = process.env.ADMIN_ID || 'nessadmin';
-const FALLBACK_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ness1234!';
+const FALLBACK_ADMIN_ID = process.env.NESS_ADMIN_ID;
+const FALLBACK_ADMIN_PASSWORD = process.env.NESS_ADMIN_PASSWORD;
 
 // 브라우저에서 직접 URL 입력(/api/admin/login) 시 405 에러 방지 및 리다이렉트
 export async function GET(request: Request) {
