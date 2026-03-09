@@ -33,6 +33,7 @@ export default function ChatContainer() {
     } = useChat();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const resultRef = useRef<HTMLDivElement>(null);
     const [branch, setBranch] = useState<Branch | null | 'loading' | 'none'>('none');
 
     useEffect(() => {
@@ -41,8 +42,13 @@ export default function ChatContainer() {
     }, []);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isLoading, branch]);
+        // 결과 화면일 경우 결과 카드 상단으로 스크롤 고정
+        if (phase === 'result' && resultRef.current) {
+            resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isLoading, branch, phase]);
 
     const handleRegionSelect = async (sido: string, sigungu: string) => {
         setBranch('loading');
@@ -66,9 +72,14 @@ export default function ChatContainer() {
 
     useEffect(() => {
         if (phase === 'result' && branch === 'none' && result && result.type !== '제한') {
-            const firstUserMessage = messages.find((m) => m.role === 'user');
-            if (firstUserMessage) {
-                const parts = firstUserMessage.content.split(' ');
+            const sidoList = [
+                '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
+                '경기도', '강원특별자치도', '충청북도', '충청남도', '전북특별자치도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
+            ];
+            const regionMessage = messages.find((m) => m.role === 'user' && sidoList.some(sido => m.content.startsWith(sido)));
+
+            if (regionMessage) {
+                const parts = regionMessage.content.split(' ');
                 if (parts.length >= 2) {
                     handleRegionSelect(parts[0], parts.slice(1).join(' '));
                 }
@@ -99,8 +110,8 @@ export default function ChatContainer() {
                     <ProgressBar current={phase === 'questioning' ? currentStep : totalSteps} total={totalSteps} />
                 )}
 
-                {/* 이전으로 돌아가기 버튼 (진행률 바 아래에 위치) */}
-                {canGoBack && !isLoading && (
+                {/* 이전으로 돌아가기 버튼 (진행률 바 아래에 위치 - result 단계에서는 숨김) */}
+                {canGoBack && !isLoading && phase !== 'result' && (
                     <div className="absolute left-6 top-8 z-20">
                         <button
                             onClick={goBack}
@@ -138,7 +149,7 @@ export default function ChatContainer() {
                         )}
 
                         {phase === 'result' && result && (
-                            <div className="animate-reveal-up">
+                            <div className="animate-reveal-up" ref={resultRef}>
                                 <ResultCard result={result} />
                             </div>
                         )}

@@ -8,12 +8,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateResponse, safeParseJSON } from '@/lib/gemini';
 import {
     buildAnalysisPrompt,
-    INFO_MESSAGE,
-    INTRO_MESSAGE,
-    LOCATION_STEP_MESSAGE,
-    STATIC_QUESTIONS,
+    getInfoMessage,
+    getIntroMessage,
+    getLocationStepMessage,
+    getStaticQuestions,
 } from '@/lib/prompts';
-import { getPDFContent } from '@/lib/pdf-parser';
 
 // 챗봇 단계 타입 정의
 type ChatPhase = 'intro' | 'info' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
@@ -45,6 +44,7 @@ interface ChatResponse {
     currentStep?: number;
     totalSteps?: number;
     showIncomeTable?: boolean; // 중위소득 기준표 표시 여부
+    type?: string; // 질문의 특수 타입 (예: 'region')
     result?: {
         type: string;
         score?: number | null;
@@ -76,29 +76,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // ==================== INTRO 단계 ====================
         // 첫 번째 인사 메시지 반환 (Gemini 호출 없음)
         if (phase === 'intro') {
-            return NextResponse.json(INTRO_MESSAGE, { status: 200 });
+            return NextResponse.json(getIntroMessage(), { status: 200 });
         }
 
         // ==================== INFO 단계 ====================
         // 국민취업지원제도 정보 메시지 반환 (Gemini 호출 없음)
         if (phase === 'info') {
-            return NextResponse.json(INFO_MESSAGE, { status: 200 });
+            return NextResponse.json(getInfoMessage(), { status: 200 });
         }
 
-        // ==================== LOCATION 단계 ====================
-        // 지역 선택 안내 메시지 반환 (Gemini 호출 없음)
+        // ==================== LOCATION 단계 (Deprecated) ====================
+        // 더 이상 사용되지 않음 (이제 질문 단계에서 처리됨)
         if (phase === 'location') {
-            return NextResponse.json(LOCATION_STEP_MESSAGE, { status: 200 });
+            return NextResponse.json({ error: 'Deprecated phase' }, { status: 400 });
         }
 
         // ==================== ANALYZING 단계 ====================
         // 수집된 QA 데이터로 최종 유형 판별
         if (phase === 'analyzing') {
-            // PDF 규정 문서 텍스트 로드
-            const pdfContent = await getPDFContent();
+            // DB에서 커스텀 시스템 프롬프트 로드
+            const { getSetting } = await import('@/lib/db');
+            const customSystemPrompt = getSetting('system_prompt');
 
             // 분석 프롬프트 생성 (규정 + 사용자 답변 결합)
-            const analysisPrompt = buildAnalysisPrompt(pdfContent, userAnswers);
+            const analysisPrompt = buildAnalysisPrompt(userAnswers, customSystemPrompt);
 
             // Gemini API 호출 (분석 모델 사용)
             const rawResponse = await generateResponse(
@@ -136,33 +137,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // ==================== QUESTIONING 단계 ====================
         // 정적 질문 반환 (프론트엔드에서 넘겨준 currentStep 기준)
-        // currentStep은 질문 완료 후 반환하는 값이므로,
-        // 클라이언트에서 0을 보내면 0번 인덱스, 1을 보내면 1번 인덱스를 줍니다.
-        const questionIndex = currentStep;
+        const staticQuestions = getStaticQuestions();
+        const totalStaticSteps = staticQuestions.length;
+        const totalSteps = totalStaticSteps + 1; // 거주 지역 질문(하드코딩) 포함
 
-        if (questionIndex >= STATIC_QUESTIONS.length) {
+        if (currentStep === 0) {
+            // 거주 지역 묻기 (하드코딩 - 동적 수정 불가능해야 하는 필수 항목)
+            return NextResponse.json({
+                message: '1. 거주 지역 확인\n가까운 잡모아 지점을 안내해 드리기 위해 거주하시는 지역을 선택해주세요.',
+                choices: [],
+                phase: 'questioning',
+                currentStep: 1,
+                totalSteps: totalSteps,
+                showIncomeTable: false,
+                type: 'region'
+            } as ChatResponse, { status: 200 });
+        }
+
+        const questionIndex = currentStep - 1;
+
+        if (questionIndex >= staticQuestions.length) {
             // 모든 정적 질문이 끝남. 프론트엔드가 analyzing 단계로 넘어가도록 유도
             return NextResponse.json({
                 message: '모든 질문이 완료되었습니다. 분석을 시작합니다...',
                 choices: [],
                 phase: 'questioning', // 아직 훅에서 triggerAnalysis를 통해 넘어갈 수 있도록
-                currentStep: questionIndex + 1,
-                totalSteps: STATIC_QUESTIONS.length,
+                currentStep: currentStep + 1,
+                totalSteps: totalSteps,
                 showIncomeTable: false,
-            } as ChatResponse);
+            } as ChatResponse, { status: 200 });
         }
 
-        const nextQuestion = STATIC_QUESTIONS[questionIndex];
+        const nextQuestion = staticQuestions[questionIndex];
 
         // 정상 응답 반환
         return NextResponse.json({
             message: nextQuestion.message,
             choices: nextQuestion.choices,
             phase: 'questioning',
-            currentStep: questionIndex + 1,
-            totalSteps: STATIC_QUESTIONS.length,
+            currentStep: currentStep + 1,
+            totalSteps: totalSteps,
             showIncomeTable: nextQuestion.showIncomeTable,
-        } as ChatResponse);
+            type: nextQuestion.type
+        } as ChatResponse, { status: 200 });
 
 
     } catch (error) {
