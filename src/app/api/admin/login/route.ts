@@ -7,6 +7,12 @@ import bcrypt from 'bcryptjs';
 const FALLBACK_ADMIN_ID = process.env.ADMIN_ID || 'nessadmin';
 const FALLBACK_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ness1234!';
 
+// 브라우저에서 직접 URL 입력(/api/admin/login) 시 405 에러 방지 및 리다이렉트
+export async function GET(request: Request) {
+    const url = new URL(request.url);
+    return NextResponse.redirect(new URL('/admin/login', url.origin));
+}
+
 export async function POST(request: Request) {
     try {
         const { id: username, password } = await request.json();

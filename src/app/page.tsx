@@ -17,7 +17,7 @@ export default function HomePage() {
 
             <main className="wide-container pt-40 pb-20">
                 {/* 2. 히어로 섹션 - 그리드 기반 미니멀리즘 */}
-                <section className="minimal-grid mb-40">
+                <section className="minimal-grid pt-20 mb-80">
                     <div className="col-span-12 lg:col-span-8 animate-reveal-up">
                         <div className="inline-flex items-center gap-2 mb-12 opacity-50">
                             <Sparkles size={14} className="text-[#2DD4BF]" />
@@ -32,7 +32,7 @@ export default function HomePage() {
                         </h1>
 
                         <p className="max-w-xl text-white/40 text-lg md:text-xl font-medium leading-relaxed mb-16">
-                            당신의 복잡한 내일을 AI 멘토 NESS가 단 3분 만에 설계합니다. 국취제 자격 진단부터 예상 수당까지, 가장 정확한 데이터를 경험하세요.
+                            당신의 복잡한 내일을 AI 멘토 NESS가 단 3분 만에 설계합니다. 국취제 진단부터 예상 수당까지, 가장 정확한 데이터를 경험하세요.
                         </p>
 
                         <Link
@@ -42,17 +42,6 @@ export default function HomePage() {
                             <span>진단 시작하기</span>
                             <MoveRight size={32} className="text-[#2DD4BF]" />
                         </Link>
-                    </div>
-
-                    <div className="hidden lg:flex col-span-4 flex-col justify-end items-end pb-2 animate-reveal-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="text-right">
-                            <p className="text-white/20 text-[10px] uppercase font-black tracking-widest mb-4">Current Status</p>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-white text-5xl font-black tabular-nums">12.4K</span>
-                                <span className="text-[#2DD4BF] text-xs font-bold">+</span>
-                            </div>
-                            <p className="text-white/40 text-xs mt-2 uppercase tracking-tight">Diagnostics Completed</p>
-                        </div>
                     </div>
                 </section>
 
@@ -69,7 +58,7 @@ export default function HomePage() {
                         <div className="p-10 border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors group">
                             <p className="text-[#2DD4BF] text-[10px] font-black mb-6 uppercase tracking-widest">Type 1</p>
                             <h3 className="text-white text-2xl font-bold mb-4">구직촉진수당</h3>
-                            <p className="text-white/30 text-sm leading-relaxed mb-10">월 50만원씩 6개월간 총 300만원의 생계 지원금을 지급받으실 수 있습니다.</p>
+                            <p className="text-white/30 text-sm leading-relaxed mb-10">월 60만원씩 6개월간 총 360만원의 생계 지원금을 지급받으실 수 있습니다.</p>
                             <ArrowRight size={20} className="text-white/10 group-hover:text-[#2DD3BF] transition-colors" />
                         </div>
                         <div className="p-10 border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors group">
@@ -83,7 +72,7 @@ export default function HomePage() {
 
                 {/* 4. 섹션: AI Strength */}
                 <section className="minimal-grid mb-60 opacity-0 animate-reveal-up" style={{ animationDelay: '0.6s', animationFillMode: 'forwards' }}>
-                    <div className="col-span-12 lg:col-start-5 lg:col-span-8">
+                    <div className="col-span-12">
                         <p className="text-white/20 text-[10px] uppercase font-black tracking-widest mb-10">02 / Technology</p>
                         <h2 className="text-white text-5xl md:text-7xl font-black tracking-tighter mb-20 leading-[1.1]">
                             프라이버시를 존중하는<br />
