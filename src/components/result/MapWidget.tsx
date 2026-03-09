@@ -125,7 +125,7 @@ export default function MapWidget({ branch }: MapWidgetProps) {
     }
 
     return (
-        <div className="w-full h-full min-h-[300px] animate-reveal-up flex-1 flex flex-col relative">
+        <div className="w-full h-full animate-reveal-up flex-1 flex flex-col relative">
             {apiKey && (
                 <Script
                     strategy="afterInteractive"
@@ -143,9 +143,9 @@ export default function MapWidget({ branch }: MapWidgetProps) {
                 />
             )}
 
-            <div className="glass-panel p-2 md:p-3 rounded-[2.5rem] border-2 border-[#2DD4BF]/10 overflow-hidden h-full flex relative shadow-[0_0_50px_rgba(45,212,191,0.05)] bg-[#0B1120]/40 backdrop-blur-2xl">
+            <div className="w-full h-full relative overflow-hidden flex">
                 {/* 지도가 담길 컨테이너 */}
-                <div className="w-full h-full rounded-[2rem] overflow-hidden relative" ref={mapRef}>
+                <div className="w-full h-full overflow-hidden relative" ref={mapRef}>
                     {/* 로딩 표시 */}
                     {!isMapLoaded && !error && apiKey && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B1120] z-10">
@@ -173,12 +173,6 @@ export default function MapWidget({ branch }: MapWidgetProps) {
                     )}
                 </div>
 
-                {/* 우측 하단 워터마크 표시 */}
-                <div className="absolute bottom-5 right-5 z-20 pointer-events-none">
-                    <span className="text-[10px] font-black tracking-widest bg-black/50 px-3 py-1.5 rounded-full text-white/50 border border-white/10 backdrop-blur-md shadow-lg">
-                        Kakao Maps API
-                    </span>
-                </div>
             </div>
         </div>
     );

@@ -41,7 +41,7 @@ export interface DiagnosisResult {
 }
 
 /** 챗봇 단계 타입 */
-export type ChatPhase = 'intro' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
+export type ChatPhase = 'intro' | 'info' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
 
 /** 챗봇 상태 스냅샷 (이전으로 돌아가기 기능용) */
 export interface ChatStateSnapshot {
@@ -252,9 +252,14 @@ export function useChat(): UseChatReturn {
             ];
             setHistory(newHistory);
 
-            // '시작하기' 선택 시 → intro에서 questioning으로 전환
-            const nextPhase: ChatPhase =
-                phase === 'intro' && choice.value === 'start' ? 'questioning' : phase;
+            // 단계 전환 로직
+            let nextPhase: ChatPhase = phase;
+            if (phase === 'intro') {
+                if (choice.value === 'start') nextPhase = 'questioning';
+                else if (choice.value === 'info') nextPhase = 'info';
+            } else if (phase === 'info') {
+                if (choice.value === 'start') nextPhase = 'questioning';
+            }
 
             // 답변 저장 (단계별 키로 저장)
             const stepKey = `step_${currentStep}_${Date.now()}`;

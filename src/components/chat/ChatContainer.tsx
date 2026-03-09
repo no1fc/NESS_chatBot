@@ -129,23 +129,18 @@ export default function ChatContainer() {
 
             {/* 1-View 1-Question 중앙 메인 콘텐츠 영역 (스크롤) */}
             <div className="flex-1 overflow-y-auto px-6">
-                <div className={`min-h-[calc(100vh-80px)] flex flex-col w-full mx-auto pb-10 ${phase === 'result' ? 'max-w-[1600px] pt-[120px] md:pt-[140px]' : 'max-w-4xl pt-[180px] md:pt-[200px] pb-32'
+                <div className={`min-h-[calc(100vh-80px)] flex flex-col w-full mx-auto ${phase === 'result' ? 'max-w-[1600px] pt-[80px] md:pt-[100px] pb-6' : 'max-w-4xl pt-[180px] md:pt-[200px] pb-32'
                     }`}>
-                    <div className="my-auto w-full flex flex-col items-center">
+                    <div className={`w-full flex flex-col items-center ${phase === 'result' ? 'flex-1' : 'my-auto'}`}>
                         {phase === 'result' ? (
-                            <div key="result-view" className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch animate-reveal-up pb-10">
+                            <div key="result-view" className="w-full flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch animate-reveal-up pb-4">
                                 <div className="flex flex-col h-full">
                                     {result && <ResultCard result={result} />}
                                 </div>
                                 <div className="flex flex-col h-full">
-                                    {branch !== 'none' && branch !== 'loading' && result && (
-                                        <BranchCard branch={branch} diagnosisType={result.type} />
+                                    {branch !== 'loading' && result && (
+                                        <BranchCard branch={branch === 'none' ? null : branch} diagnosisType={result.type} />
                                     )}
-                                </div>
-                                <div className="flex flex-col h-full">
-                                    {(branch !== 'none' && branch !== 'loading' && result) || branch === null ? (
-                                        <MapWidget branch={branch as Branch | null} />
-                                    ) : null}
                                 </div>
                             </div>
                         ) : isLoading ? (

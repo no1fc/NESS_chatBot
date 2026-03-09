@@ -86,11 +86,6 @@ export default function HomePage() {
                                 </div>
 
                                 <p className="text-white/50 text-base font-medium leading-relaxed mb-12">월 60만원씩 최대 6개월간 총 360만원의 생계 지원금을 지급하여 온전히 구직에만 집중할 수 있게 돕습니다.</p>
-
-                                <div className="flex items-center justify-between text-white/30 group-hover:text-white transition-colors">
-                                    <span className="text-xs font-bold uppercase tracking-wider">Learn More</span>
-                                    <ArrowRight size={20} className="transform group-hover:translate-x-2 transition-transform" />
-                                </div>
                             </div>
 
                             {/* Type 2 Card */}
@@ -107,11 +102,6 @@ export default function HomePage() {
                                 </div>
 
                                 <p className="text-white/50 text-base font-medium leading-relaxed mb-12">직업훈련 참여 시 최대 195만원의 수당과 함께 이력서 클리닉, 면접 코칭 등 전문적인 취업 지원을 제공합니다.</p>
-
-                                <div className="flex items-center justify-between text-white/30 group-hover:text-white transition-colors">
-                                    <span className="text-xs font-bold uppercase tracking-wider">Learn More</span>
-                                    <ArrowRight size={20} className="transform group-hover:translate-x-2 transition-transform" />
-                                </div>
                             </div>
                         </div>
                     </ScrollReveal>
