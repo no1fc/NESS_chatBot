@@ -20,6 +20,8 @@ export interface Branch {
     address: string;        // 주소
     phone: string;          // 연락처
     specific_url: string;   // 전용 상담 URL
+    latitude?: number;      // 위도 (선택)
+    longitude?: number;     // 경도 (선택)
     created_at: string;     // 생성 일시
 }
 
@@ -87,6 +89,8 @@ function initSchema(database: Database.Database): void {
       address TEXT NOT NULL,
       phone TEXT NOT NULL,
       specific_url TEXT NOT NULL,
+      latitude REAL DEFAULT NULL,
+      longitude REAL DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -94,6 +98,20 @@ function initSchema(database: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_region
     ON branches(region_sido, region_sigungu);
   `);
+
+    // 기존 데이터베이스 마이그레이션 로직 (latitude, longitude 컬럼 추가)
+    const tableInfo = database.prepare('PRAGMA table_info(branches)').all() as { name: string }[];
+    const hasLatitude = tableInfo.some((info) => info.name === 'latitude');
+    const hasLongitude = tableInfo.some((info) => info.name === 'longitude');
+
+    if (!hasLatitude) {
+        database.exec('ALTER TABLE branches ADD COLUMN latitude REAL DEFAULT NULL;');
+        console.log('[DB Migration] Added latitude to branches table');
+    }
+    if (!hasLongitude) {
+        database.exec('ALTER TABLE branches ADD COLUMN longitude REAL DEFAULT NULL;');
+        console.log('[DB Migration] Added longitude to branches table');
+    }
 
     // 2. 관리자 계정 테이블 생성 (Phase 2)
     database.exec(`
@@ -152,6 +170,16 @@ export function getAllBranches(): Branch[] {
 }
 
 /**
+ * 전체 지점 개수 반환
+ */
+export function getBranchCount(): number {
+    const database = getDB();
+    const stmt = database.prepare('SELECT COUNT(*) as count FROM branches');
+    const result = stmt.get() as { count: number };
+    return result.count;
+}
+
+/**
  * 지점 데이터 삽입 함수 (시드 스크립트에서 사용)
  * @param branches - 삽입할 지점 데이터 배열
  */
@@ -161,8 +189,8 @@ export function insertBranches(branches: Omit<Branch, 'id' | 'created_at'>[]): v
     // 트랜잭션으로 일괄 삽입 (성능 최적화)
     const insert = database.prepare(`
     INSERT OR IGNORE INTO branches
-    (region_sido, region_sigungu, branch_name, address, phone, specific_url)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (region_sido, region_sigungu, branch_name, address, phone, specific_url, latitude, longitude)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
     const insertMany = database.transaction((branchList: Omit<Branch, 'id' | 'created_at'>[]) => {
@@ -173,7 +201,9 @@ export function insertBranches(branches: Omit<Branch, 'id' | 'created_at'>[]): v
                 branch.branch_name,
                 branch.address,
                 branch.phone,
-                branch.specific_url
+                branch.specific_url,
+                branch.latitude !== undefined ? branch.latitude : null,
+                branch.longitude !== undefined ? branch.longitude : null
             );
         }
     });
@@ -226,6 +256,16 @@ export function getAllAdmins(): AdminUser[] {
     // 여기서는 패스워드를 뺀 객체로 캐스팅하거나 쿼리 레벨에서 제외
     const stmt = database.prepare('SELECT id, username, role, created_at FROM admin_users ORDER BY id DESC');
     return stmt.all() as AdminUser[];
+}
+
+/**
+ * 전체 관리자 개수 반환
+ */
+export function getAdminCount(): number {
+    const database = getDB();
+    const stmt = database.prepare('SELECT COUNT(*) as count FROM admin_users');
+    const result = stmt.get() as { count: number };
+    return result.count;
 }
 
 export function createAdmin(username: string, password_hash: string, role: string = 'admin'): boolean {

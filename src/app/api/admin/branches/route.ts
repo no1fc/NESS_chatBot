@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { region_sido, region_sigungu, branch_name, address, phone, specific_url } = body;
+        const { region_sido, region_sigungu, branch_name, address, phone, specific_url, latitude, longitude } = body;
 
         // 기초적인 검증 로직 추가 (Phase 2)
         if (!region_sido || !region_sigungu || !branch_name || !address || !phone || !specific_url) {
@@ -31,7 +31,9 @@ export async function POST(request: Request) {
                 branch_name,
                 address,
                 phone,
-                specific_url
+                specific_url,
+                latitude: latitude ? parseFloat(latitude) : undefined,
+                longitude: longitude ? parseFloat(longitude) : undefined
             }
         ]);
 

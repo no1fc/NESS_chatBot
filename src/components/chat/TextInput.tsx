@@ -46,24 +46,24 @@ export default function TextInput({ onSubmit, onCancel, placeholder, disabled }:
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder || '메시지를 입력하세요...'}
                     disabled={disabled}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 pr-32 text-sm text-white focus:outline-none focus:border-[#2DD4BF]/30 transition-all placeholder:text-white/20"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl px-6 py-4 md:py-6 pr-36 text-base md:text-lg text-white focus:outline-none focus:border-[#2DD4BF]/30 transition-all placeholder:text-white/20"
                 />
 
-                <div className="absolute right-2 flex items-center gap-2">
+                <div className="absolute right-3 flex items-center gap-2">
                     {onCancel && (
                         <button
                             onClick={onCancel}
                             disabled={disabled}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/20 hover:text-white/40 transition-colors"
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white/20 hover:text-white/40 transition-colors"
                             aria-label="취소"
                         >
-                            <X size={18} />
+                            <X size={20} />
                         </button>
                     )}
                     <button
                         onClick={handleSubmit}
                         disabled={!canSubmit || disabled}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${canSubmit ? 'bg-[#2DD4BF] text-[#0B1120] hover:scale-105 shadow-lg shadow-[#2DD4BF]/10' : 'bg-white/5 text-white/10'}`}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all ${canSubmit ? 'bg-[#2DD4BF] text-[#0B1120] hover:scale-105 shadow-lg shadow-[#2DD4BF]/10' : 'bg-white/5 text-white/10'}`}
                         aria-label="전송"
                     >
                         <Send size={18} fill={canSubmit ? 'currentColor' : 'none'} />

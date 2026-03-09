@@ -44,9 +44,9 @@ export default function ResultCard({ result }: { result: DiagnosisResult }) {
     const isRestricted = result.type === '제한';
 
     return (
-        <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
+        <div className="w-full h-full animate-reveal-up flex flex-col">
             <div
-                className={`glass-panel rounded-[2.5rem] p-10 border-2 overflow-hidden relative ${config.glow}`}
+                className={`glass-panel rounded-[2.5rem] p-8 md:p-10 border-2 overflow-hidden relative flex flex-col h-full ${config.glow}`}
                 style={{ borderColor: config.borderColor }}
             >
                 {/* 배경 오로라 효과 */}
@@ -55,7 +55,7 @@ export default function ResultCard({ result }: { result: DiagnosisResult }) {
                     style={{ backgroundColor: config.iconColor }}
                 />
 
-                <div className="flex flex-col items-center text-center mb-10 relative z-10">
+                <div className="flex flex-col items-center text-center mb-8 relative z-10 shrink-0">
                     <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6 border border-white/10 backdrop-blur-3xl">
                         <IconComponent size={36} color={config.iconColor} />
                     </div>
@@ -65,7 +65,7 @@ export default function ResultCard({ result }: { result: DiagnosisResult }) {
                 </div>
 
                 {result.score !== null && result.score !== undefined && (
-                    <div className="bg-white/5 rounded-[2rem] p-8 mb-10 border border-white/5 relative z-10">
+                    <div className="bg-white/5 rounded-[2rem] p-6 md:p-8 mb-8 border border-white/5 relative z-10 shrink-0">
                         <div className="flex items-center justify-between">
                             <div className="text-left">
                                 <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Eligibility Score</p>
@@ -90,21 +90,21 @@ export default function ResultCard({ result }: { result: DiagnosisResult }) {
                     </div>
                 )}
 
-                <div className="mb-10 p-6 rounded-[1.5rem] bg-white/5 border-l-4 border-[#2DD4BF] relative z-10">
+                <div className="mb-8 p-6 rounded-[1.5rem] bg-white/5 border-l-4 border-[#2DD4BF] relative z-10 shrink-0">
                     <p className="text-white/80 text-sm leading-relaxed font-bold">
                         {result.description}
                     </p>
                 </div>
 
                 {isRestricted && result.restrictReason && (
-                    <div className="mb-10 p-6 rounded-[1.5rem] bg-red-500/5 border border-red-500/20 relative z-10">
+                    <div className="mb-8 p-6 rounded-[1.5rem] bg-red-500/5 border border-red-500/20 relative z-10 shrink-0">
                         <p className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-3">Restriction Reason</p>
                         <p className="text-red-200 text-sm font-bold leading-relaxed">{result.restrictReason}</p>
                     </div>
                 )}
 
                 {result.tips && result.tips.length > 0 && (
-                    <div className="mb-12 space-y-4 relative z-10">
+                    <div className="mb-8 space-y-4 relative z-10 shrink-0">
                         <div className="flex items-center gap-3 ml-1">
                             <Lightbulb size={16} className="text-[#FBBF24]" />
                             <span className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em]">AI Mentor's Advice</span>
@@ -117,7 +117,7 @@ export default function ResultCard({ result }: { result: DiagnosisResult }) {
                     </div>
                 )}
 
-                <div className="space-y-4 relative z-10">
+                <div className="space-y-4 relative z-10 mt-auto pt-4 shrink-0">
                     {isRestricted && (
                         <a
                             href="https://www.work24.go.kr"

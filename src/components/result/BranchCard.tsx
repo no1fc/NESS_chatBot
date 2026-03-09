@@ -16,9 +16,9 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
 
     if (!branch) {
         return (
-            <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
-                <div className="glass-panel rounded-[2.5rem] p-10 border-2 border-white/5 relative overflow-hidden">
-                    <div className="flex flex-col items-center text-center mb-10 relative z-10">
+            <div className="w-full h-full min-h-[400px] flex flex-col animate-reveal-up">
+                <div className="glass-panel rounded-[2.5rem] p-8 md:p-10 border-2 border-white/5 relative overflow-hidden h-full flex flex-col justify-center">
+                    <div className="flex flex-col items-center text-center mb-8 relative z-10 shrink-0">
                         <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6 border border-white/10">
                             <Building2 size={36} className="text-white/20" />
                         </div>
@@ -26,22 +26,24 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
                         <h2 className="text-white text-3xl font-black tracking-tighter">상담 가능한 지점이 없습니다</h2>
                     </div>
 
-                    <div className="bg-white/5 rounded-[1.5rem] p-6 mb-10 border border-white/5 relative z-10">
+                    <div className="bg-white/5 rounded-[1.5rem] p-6 mb-8 border border-white/5 relative z-10 shrink-0">
                         <p className="text-white/60 text-sm leading-relaxed text-center font-medium">
                             선택하신 지역에는 현재 잡모아 지점이 운영되고 있지 않습니다.<br />
                             공식 포털을 통해 온라인으로 신청하실 수 있습니다.
                         </p>
                     </div>
 
-                    <a
-                        href={`https://www.work24.go.kr/ua/z/z/1100/selectOperInst.do?currentPageNo=1&recordCountPerPage=10&srchType=&srchRegionCd=&srchBizSecd=K&srchRegionDetailCd=&srchKeyword=%EC%9E%A1%EB%AA%A8%EC%95%84`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10 group relative z-10"
-                    >
-                        <ExternalLink size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                        고용24에서 바로 신청하기
-                    </a>
+                    <div className="mt-auto pt-4 shrink-0">
+                        <a
+                            href={`https://www.work24.go.kr/ua/z/z/1100/selectOperInst.do?currentPageNo=1&recordCountPerPage=10&srchType=&srchRegionCd=&srchBizSecd=K&srchRegionDetailCd=&srchKeyword=%EC%9E%A1%EB%AA%A8%EC%95%84`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-black text-sm flex items-center justify-center gap-3 transition-all hover:bg-white/10 group relative z-10"
+                        >
+                            <ExternalLink size={20} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                            고용24에서 바로 신청하기
+                        </a>
+                    </div>
                 </div>
             </div>
         );
@@ -52,12 +54,12 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
         : `${branch.specific_url}?${utmParams}`;
 
     return (
-        <div className="mx-auto w-full max-w-lg animate-reveal-up my-8">
-            <div className="glass-panel rounded-[2.5rem] p-10 border-2 border-[#2DD4BF]/20 relative overflow-hidden shadow-[0_0_50px_rgba(45,212,191,0.1)]">
+        <div className="w-full h-full min-h-[400px] flex flex-col animate-reveal-up">
+            <div className="glass-panel rounded-[2.5rem] p-8 md:p-10 border-2 border-[#2DD4BF]/20 relative overflow-hidden h-full flex flex-col justify-center shadow-[0_0_50px_rgba(45,212,191,0.1)]">
                 {/* 배경 오로라 */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#2DD4BF] rounded-full blur-[100px] opacity-10 pointer-events-none" />
 
-                <div className="flex flex-col items-center text-center mb-10 relative z-10">
+                <div className="flex flex-col items-center text-center mb-8 relative z-10 shrink-0">
                     <div className="w-20 h-20 rounded-3xl bg-[#2DD4BF]/10 flex items-center justify-center mb-6 border border-[#2DD4BF]/20 backdrop-blur-3xl">
                         <Building2 size={36} className="text-[#2DD4BF]" />
                     </div>
@@ -91,7 +93,7 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4 relative z-10">
+                <div className="flex flex-col gap-4 mt-auto pt-4 relative z-10 shrink-0">
                     <a
                         href={branchUrl}
                         target="_blank"
@@ -111,7 +113,7 @@ export default function BranchCard({ branch, diagnosisType }: BranchCardProps) {
                     </a>
                 </div>
 
-                <p className="text-center text-[10px] text-white/10 mt-10 leading-relaxed font-sans font-medium">
+                <p className="text-center text-[10px] text-white/20 mt-6 md:mt-8 leading-relaxed font-sans font-medium shrink-0">
                     지점별 상황에 따라 대기 시간이 발생할 수 있습니다.<br />
                     전문 상담원의 안내는 무료로 제공됩니다.
                 </p>

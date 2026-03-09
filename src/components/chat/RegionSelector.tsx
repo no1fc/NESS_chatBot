@@ -67,7 +67,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
     const sigunguList = selectedSido ? SIGUNGU_MAP[selectedSido] || [] : [];
 
     return (
-        <div className="mx-auto glass-panel rounded-[2rem] p-8 my-6 animate-reveal-up max-w-sm border border-white/10">
+        <div className="mx-auto glass-panel rounded-[2rem] p-8 md:p-10 my-6 animate-reveal-up w-full max-w-lg border border-white/10">
             <div className="flex items-center gap-3 mb-8">
                 <MapPin className="text-[#2DD4BF]" size={18} />
                 <h3 className="text-white font-black text-xs uppercase tracking-[0.2em] opacity-50">
@@ -80,7 +80,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
                     value={selectedSido}
                     onChange={(e) => handleSidoChange(e.target.value)}
                     disabled={disabled}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#2DD4BF]/50 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl px-6 py-5 text-base text-white focus:outline-none focus:border-[#2DD4BF]/50 transition-all appearance-none cursor-pointer"
                 >
                     <option value="" className="bg-[#0B1120]">시/도 선택</option>
                     {SIDO_LIST.map((sido) => (
@@ -94,7 +94,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
                     value={selectedSigungu}
                     onChange={(e) => setSelectedSigungu(e.target.value)}
                     disabled={!selectedSido || disabled}
-                    className={`w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-[#2DD4BF]/50 transition-all appearance-none ${selectedSido ? 'text-white cursor-pointer' : 'text-white/20 cursor-not-allowed'}`}
+                    className={`w-full bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl px-6 py-5 text-base focus:outline-none focus:border-[#2DD4BF]/50 transition-all appearance-none ${selectedSido ? 'text-white cursor-pointer' : 'text-white/20 cursor-not-allowed'}`}
                 >
                     <option value="" className="bg-[#0B1120]">시/군/구 선택</option>
                     {sigunguList.map((sigungu) => (
@@ -108,7 +108,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
                     onClick={handleConfirm}
                     disabled={!canConfirm || disabled}
                     className={`
-                        w-full h-14 rounded-2xl flex items-center justify-center gap-2 font-black text-sm transition-all duration-300 mt-4
+                        w-full h-14 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center gap-2 font-black text-base md:text-lg transition-all duration-300 mt-6
                         ${canConfirm && !disabled
                             ? 'bg-[#2DD4BF] text-[#0B1120] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(45,212,191,0.2)]'
                             : 'bg-white/5 text-white/20 cursor-not-allowed'
