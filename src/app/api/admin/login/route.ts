@@ -3,6 +3,8 @@ import { getAdminByUsername, createAdmin } from '@/lib/db';
 import { signToken } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic'; // 정적 렌더링 방지 및 빌드 시점 DB 접근 오류 회피
+
 // 최초 환경 변수에서 기본 관리자 정보 가져오기 (DB 초기화용 폴백)
 const FALLBACK_ADMIN_ID = process.env.ADMIN_ID || 'nessadmin';
 const FALLBACK_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ness1234!';
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
                 const created = createAdmin(username, hashedPassword, 'superadmin');
 
                 if (created) {
-                    return handleLoginSuccess(username, 'superadmin');
+                    return handleLoginSuccess(username, 'superadmin', request);
                 } else {
                     return NextResponse.json({ error: '초기 계정 생성 중 오류가 발생했습니다. DB를 확인하세요.' }, { status: 500 });
                 }
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
         }
 
         // 3. 검증 성공 시 토큰 생성 로직 호출
-        return handleLoginSuccess(adminUser.username, adminUser.role || 'admin');
+        return handleLoginSuccess(adminUser.username, adminUser.role || 'admin', request);
 
     } catch (error) {
         console.error('로그인 처리 중 오류 발생:', error);
@@ -62,7 +64,7 @@ export async function POST(request: Request) {
 }
 
 // 중복 사용되는 토큰 생성 및 쿠키 셋팅 함수 추출
-async function handleLoginSuccess(username: string, role: string) {
+async function handleLoginSuccess(username: string, role: string, request: Request) {
     // JWT 토큰 생성
     const token = await signToken({ role, id: username }, '1d');
 
@@ -71,12 +73,16 @@ async function handleLoginSuccess(username: string, role: string) {
         { status: 200 }
     );
 
+    // 요청이 HTTPS인지 확인 (리버스 프록시 헤더 또는 URL)
+    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https://');
+
     // 보안 쿠키 설정
     response.cookies.set({
         name: 'admin_session',
         value: token,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        // HTTP 배포 환경 문제를 해결하기 위해 프로덕션이면서 HTTPS인 경우에만 secure 쿠키를 발급하도록 수정
+        secure: process.env.NODE_ENV === 'production' && isHttps,
         sameSite: 'lax',
         path: '/',
         maxAge: 60 * 60 * 24

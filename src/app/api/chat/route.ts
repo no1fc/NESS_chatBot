@@ -14,6 +14,8 @@ import {
     getStaticQuestions,
 } from '@/lib/prompts';
 
+export const dynamic = 'force-dynamic'; // API 자동 캐싱 방지 처리 및 DB 상시 조회
+
 // 챗봇 단계 타입 정의
 type ChatPhase = 'intro' | 'info' | 'questioning' | 'analyzing' | 'location' | 'result' | 'ended';
 
