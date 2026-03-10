@@ -96,7 +96,7 @@ export const DEFAULT_STATIC_QUESTIONS = [
     id: 'income',
     message: 'ℹ️ 입력하신 정보는 자가진단 목적으로만 활용되며 저장되지 않습니다.\n5. 가구 소득\n주민등록등본상의 가구원 수와 가구의 월평균 총소득을 입력해주세요.',
     choices: [
-      { id: 'income_1', label: '가구 중위 60% (약 153만원) 이하', value: '가구 중위소득 60% 이하' },
+      { id: 'income_1', label: '가구 중위 60% 이하 (표 참고)', value: '가구 중위소득 60% 이하' },
       { id: 'income_2', label: '가구 중위 100% 이하 (표 참고)', value: '가구 중위소득 100% 이하' },
       { id: 'income_120', label: '가구 중위 120% 이하 (청년-표 참고)', value: '가구 중위소득 120% 이하' },
       { id: 'other', label: '직접 입력', value: 'other', isOther: true },
