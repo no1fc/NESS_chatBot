@@ -35,6 +35,7 @@ export default function BranchesManagementPage() {
     const [branches, setBranches] = useState<Branch[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
@@ -57,6 +58,11 @@ export default function BranchesManagementPage() {
     useEffect(() => {
         fetchBranches();
     }, []);
+
+    // 검색어 변경 시 1페이지로 리셋
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     const fetchBranches = async () => {
         setIsLoading(true);
@@ -172,6 +178,12 @@ export default function BranchesManagementPage() {
         b.region_sigungu.includes(searchQuery)
     );
 
+    // 페이지네이션 로직
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.max(1, Math.ceil(filteredBranches.length / ITEMS_PER_PAGE));
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedBranches = filteredBranches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -226,14 +238,14 @@ export default function BranchesManagementPage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : filteredBranches.length === 0 ? (
+                            ) : paginatedBranches.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                                         등록된 지점이 없거나 검색 결과가 없습니다.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredBranches.map((branch) => (
+                                paginatedBranches.map((branch) => (
                                     <tr key={branch.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-6 py-4 text-sm text-gray-500">#{branch.id}</td>
                                         <td className="px-6 py-4">
@@ -283,6 +295,29 @@ export default function BranchesManagementPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 bg-white shadow-sm"
+                    >
+                        이전
+                    </button>
+                    <span className="text-sm font-medium text-gray-700 px-4">
+                        {currentPage} / {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 bg-white shadow-sm"
+                    >
+                        다음
+                    </button>
+                </div>
+            )}
 
             {/* Modal / Dialog */}
             {isModalOpen && (

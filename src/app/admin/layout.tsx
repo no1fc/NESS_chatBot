@@ -65,7 +65,7 @@ export default function AdminLayout({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="h-screen overflow-hidden bg-gray-50 flex">
             {/* 모바일 햄버거 메뉴 버튼 */}
             <button
                 className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-white rounded-lg shadow-md text-gray-700"
@@ -141,7 +141,7 @@ export default function AdminLayout({
             </aside>
 
             {/* 메인 콘텐츠 영역 */}
-            <main className="flex-1 flex flex-col min-h-screen w-full lg:w-[calc(100%-16rem)] overflow-hidden">
+            <main className="flex-1 flex flex-col h-full w-full lg:w-[calc(100%-16rem)] overflow-hidden">
                 {/* 모바일 헤더용 여백 */}
                 <div className="h-16 lg:h-0 bg-white lg:bg-transparent shadow-sm lg:shadow-none flex items-center px-6 lg:p-0">
                     <span className="font-semibold text-gray-800 lg:hidden">NESS Admin</span>
