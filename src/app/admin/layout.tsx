@@ -12,15 +12,16 @@ import {
     LogOut,
     Menu,
     X,
-    LayoutDashboard
+    LayoutDashboard,
+    Lock
 } from 'lucide-react';
 
 const SIDEBAR_ITEMS = [
-    { name: '대시보드', href: '/admin', icon: LayoutDashboard },
-    { name: '지점 등록', href: '/admin/branches', icon: Building2 },
-    { name: '관리자 지정', href: '/admin/users', icon: Users },
-    { name: 'API 설정', href: '/admin/settings/api-keys', icon: KeyRound },
-    { name: '프롬프트 관리', href: '/admin/settings/prompts', icon: MessageSquareText },
+    { name: '대시보드', href: '/admin', icon: LayoutDashboard, requiresSuperAdmin: false },
+    { name: '지점 등록', href: '/admin/branches', icon: Building2, requiresSuperAdmin: false },
+    { name: '관리자 지정', href: '/admin/users', icon: Users, requiresSuperAdmin: true },
+    { name: 'API 설정', href: '/admin/settings/api-keys', icon: KeyRound, requiresSuperAdmin: false },
+    { name: '프롬프트 관리', href: '/admin/settings/prompts', icon: MessageSquareText, requiresSuperAdmin: true },
 ];
 
 export default function AdminLayout({
@@ -29,8 +30,23 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [userRole, setUserRole] = React.useState<string | null>(null);
     const pathname = usePathname();
     const router = useRouter();
+
+    React.useEffect(() => {
+        // 클라이언트 사이드에서 현재 접속한 관리자 권한 확인 (권한이 필요한 메뉴 라우팅/렌더링용)
+        if (pathname !== '/admin/login') {
+            fetch('/api/admin/me')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.user) {
+                        setUserRole(data.user.role || 'admin');
+                    }
+                })
+                .catch(err => console.error('Failed to fetch user role:', err));
+        }
+    }, [pathname]);
 
     // 로그인 페이지 등에서는 레이아웃을 씌우지 않음
     if (pathname === '/admin/login') {
@@ -74,6 +90,25 @@ export default function AdminLayout({
                     {SIDEBAR_ITEMS.map((item) => {
                         const isActive = pathname === item.href
                             || (item.href !== '/admin' && pathname.startsWith(item.href));
+                        
+                        // 최고 관리자용 메뉴인데 일반 관리자일 경우 비활성화 처리
+                        const isDisabled = item.requiresSuperAdmin && userRole !== 'superadmin';
+
+                        if (isDisabled) {
+                            return (
+                                <div
+                                    key={item.href}
+                                    className="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium text-slate-600 bg-slate-800/30 cursor-not-allowed"
+                                    title="최고 관리자 전용 메뉴입니다"
+                                >
+                                    <div className="flex items-center gap-3 opacity-60">
+                                        <item.icon size={18} />
+                                        {item.name}
+                                    </div>
+                                    <Lock size={14} className="text-slate-500" />
+                                </div>
+                            );
+                        }
 
                         return (
                             <Link

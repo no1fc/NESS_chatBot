@@ -50,7 +50,7 @@ export const DEFAULT_SCORE_TABLE = `
 export const DEFAULT_STATIC_QUESTIONS = [
   {
     id: 'age',
-    message: '1. 연령 현황\n만 나이가 어떻게 되시나요? (예: 만 25세 등 나이를 직접 입력해주세요)\n\n(*정확한 답변이 아닐 시 유형 분류가 달라질 수 있습니다.)',
+    message: '1. 연령 현황\n만 나이가 어떻게 되시나요? (예: 만 25세 등 나이를 직접 입력해주세요)',
     choices: [
       { id: 'youth', label: '청년 (만 15세 ~ 34세)', value: '청년 (만 15세 ~ 34세)' },
       { id: 'middle', label: '중장년 (만 35세 ~ 69세)', value: '중장년 (만 35세 ~ 69세)' },
@@ -133,9 +133,9 @@ export const DEFAULT_LOCATION_STEP_MESSAGE = {
 export const DEFAULT_INTRO_MESSAGE = [
   {
     id: 'intro',
-    message: '안녕하세요! 저는 국민취업지원제도 자가진단 AI입니다.\n약 3~5분의 간단한 질문으로 내가 지원받을 수 있는 유형과 수당을 확인할 수 있습니다.\n\n⚠️ 이 진단은 자가진단 목적입니다.\n실제 결과는 고용센터 심사에 따라 달라질 수 있습니다.\n시작할까요?',
+    message: '안녕하세요! 저는 국민취업지원제도 자가진단 AI입니다.\n약 3~5분의 간단한 질문으로\n내가 지원받을 수 있는 유형과 수당을 확인할 수 있습니다.\n\n⚠️ 이 진단은 자가진단 목적입니다.\n실제 결과는 고용센터 심사에 따라 달라질 수 있습니다.\n(* 입력하신 답변이 정확하지 않으면 유형 분류가 달라질 수 있습니다.)',
     choices: [
-      { id: 'start', label: '✅ 네, 시작하겠습니다!', value: 'start' },
+      { id: 'start', label: '✅ 네, 확인했습니다!', value: 'start' },
       { id: 'info', label: 'ℹ️ 국민취업지원제도란?', value: 'info' },
     ],
     phase: 'intro',

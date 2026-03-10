@@ -48,7 +48,19 @@ export async function middleware(request: NextRequest) {
         return response;
     }
 
-    // 7. 정상적인 로그인 상태면 요청 통과
+    // 7. 역할(Role) 기반 인가(Authorization) 처리
+    const role = (payload.role as string) || 'admin';
+    
+    // 일반 관리자(Admin) 허용 경로: 대시보드 메인, 지점 관리, API 키 설정
+    // 일반 관리자(Admin) 차단 경로: 관리자 지정, 프롬프트 설정 등 그 외
+    const isAdminOnlyAllowed = path === '/admin' || path.startsWith('/admin/branches') || path.startsWith('/admin/settings/api-keys');
+    
+    if (role === 'admin' && !isAdminOnlyAllowed) {
+        // 권한이 없는 페이지 접근 시 대시보드로 강제 이동 (또는 403 페이지로 이동 가능)
+        return NextResponse.redirect(new URL('/admin', request.url));
+    }
+
+    // 8. 정상적인 로그인 상태 및 권한 통과
     return NextResponse.next();
 }
 
