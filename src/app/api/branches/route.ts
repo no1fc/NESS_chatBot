@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBranchByRegion } from '@/lib/db';
 
+export const dynamic = 'force-dynamic'; // API 자동 캐싱 방지 및 DB 상시 조회
+
 /**
  * GET 요청 핸들러
  * @param request - URL 파라미터 sido, sigungu로 지점 조회

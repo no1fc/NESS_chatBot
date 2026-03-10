@@ -16,6 +16,21 @@ export async function GET() {
 // 신규 관리자 생성
 export async function POST(request: Request) {
     try {
+        // --- 1. 권한 체크 (쿠키 기반) ---
+        // (NextRequest가 아닌 Request 타입이므로 headers.get('cookie') 등에서 추출해야 하나
+        // NextAppRouter 방식의 API 라우트에서는 cookies() 훅 이용이 권장됨)
+        const { cookies } = await import('next/headers');
+        const token = (await cookies()).get('admin_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: '인증되지 않은 요청입니다.' }, { status: 401 });
+        }
+        const { verifyToken } = await import('@/lib/auth');
+        const payload = await verifyToken(token);
+        if (!payload || payload.role !== 'superadmin') {
+            return NextResponse.json({ error: '최고 관리자(Super Admin) 권한이 필요합니다.' }, { status: 403 });
+        }
+        // ---------------------------------
+
         const body = await request.json();
         const { username, password, role } = body;
 

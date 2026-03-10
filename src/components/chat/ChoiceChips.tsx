@@ -51,13 +51,13 @@ export default function ChoiceChips({ choices, onSelect, onTextSubmit, disabled 
                     key={choice.id}
                     onClick={() => handleChoiceClick(choice)}
                     disabled={disabled}
-                    className="group relative flex items-center gap-3 px-5 py-3 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative flex items-center gap-3 md:gap-4 px-6 py-4 md:px-8 md:py-5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#2DD4BF]/5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {choice.type === 'text' && <Sparkles size={14} className="text-[#2DD4BF]" />}
-                    <span className="text-sm font-bold text-white/70 group-hover:text-[#2DD4BF] transition-colors">
+                    {choice.type === 'text' && <Sparkles size={18} className="text-[#2DD4BF]" />}
+                    <span className="text-base md:text-lg font-bold text-white/70 group-hover:text-[#2DD4BF] transition-colors">
                         {choice.label}
                     </span>
-                    <ChevronRight size={14} className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight size={18} className="text-white/20 group-hover:text-white/60 group-hover:translate-x-1 transition-all" />
                 </button>
             ))}
         </div>

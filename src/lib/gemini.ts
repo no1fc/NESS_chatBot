@@ -22,57 +22,79 @@ export async function generateResponse(
     userMessage: string,
     useAnalysisModel: boolean = false
 ): Promise<string> {
-    // DB에서 최신 API 키 가져오기 (없으면 환경변수 폴백)
-    const apiKey = getSetting('gemini_api_key') || process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-        throw new Error('Gemini API 키가 설정되지 않았습니다.');
+    const keysRaw = getSetting('gemini_api_keys');
+    let keys: string[] = [];
+    if (keysRaw) {
+        try {
+            keys = JSON.parse(keysRaw);
+            if (!Array.isArray(keys)) keys = [];
+        } catch (e) {
+            keys = [];
+        }
     }
 
-    // Google Generative AI 클라이언트 초기화
-    const genAI = new GoogleGenerativeAI(apiKey);
+    // 환경 변수에 값이 있고, 배열에 없다면 추가
+    if (keys.length === 0 && process.env.GEMINI_API_KEY) {
+        keys.push(process.env.GEMINI_API_KEY);
+    }
 
-    // 사용할 모델 선택 및 설정
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-flash-lite-latest',
-        generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: useAnalysisModel ? 2048 : 1024,
-            responseMimeType: 'application/json',
-        },
-    });
+    if (keys.length === 0) {
+        throw new Error('Gemini API 키가 설정되지 않았습니다.');
+    }
 
     // 시스템 프롬프트와 사용자 메시지를 하나의 프롬프트로 결합
     const fullPrompt = `${systemPrompt}\n\n---\n\n${userMessage}`;
 
-    // 최대 2회 시도 (Rate Limit 시 재시도)
-    const maxRetries = 2;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let lastError: any = null;
+
+    // 등록된 API 키들을 순회하며 요청 시도
+    for (let i = 0; i < keys.length; i++) {
+        const apiKey = keys[i];
         try {
+            // 설정에서 모델명 불러오기 (기본값: gemini-1.5-flash)
+            const configuredModel = getSetting('gemini_model_name') || 'gemini-1.5-flash';
+
+            // Google Generative AI 클라이언트 초기화
+            const genAI = new GoogleGenerativeAI(apiKey);
+
+            // 사용할 모델 선택 및 설정
+            const model = genAI.getGenerativeModel({
+                model: configuredModel,
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: useAnalysisModel ? 2048 : 1024,
+                    responseMimeType: 'application/json',
+                },
+            });
+
             // Gemini API 호출
             const result = await model.generateContent(fullPrompt);
             const response = result.response;
-            const text = response.text();
-            return text;
-        } catch (error: unknown) {
-            const apiError = error as { status?: number; statusText?: string };
+            return response.text();
 
-            // Rate Limit(429) 또는 서버 과부하(503) 발생 시 재시도
-            if ((apiError?.status === 429 || apiError?.status === 503) && attempt < maxRetries) {
-                console.warn(`Gemini 오류 ${apiError.status}. ${attempt}회 시도 실패, 10초 후 재시도...`);
-                // 10초 대기 후 재시도
-                await new Promise((resolve) => setTimeout(resolve, 10000));
+        } catch (error: any) {
+            lastError = error;
+            const status = error?.status;
+
+            // 403 (Forbidden, 401 (Unauthorized), 429 (Too Many Requests) -> 다음 키 시도
+            if (
+                status === 403 || status === 401 || status === 429 || status === 503 ||
+                error.message?.includes('403') || error.message?.includes('leaked') || error.message?.includes('API key not valid')
+            ) {
+                console.warn(`[Gemini API] Key ${i + 1}/${keys.length} failed (Status: ${status}). error: ${error.message}. trying next key...`);
+                // 마지막 키가 아니라면 다음 루프로 진행
                 continue;
             }
 
-            // 그 외 오류 또는 재시도 초과
-            console.error('Gemini API 호출 오류:', error);
-            throw new Error('AI 서비스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            console.error(`[Gemini API] Key ${i + 1} unexpected error:`, error);
+            // 알 수 없는 에러여도 다음 키가 있으면 시도
+            continue;
         }
     }
 
-    // 모든 재시도 실패 (도달 불가 코드이지만 TypeScript 만족)
-    throw new Error('AI 서비스 연결에 실패했습니다.');
+    // 루프를 다 돌았는데도 성공하지 못한 경우
+    console.error('All Gemini API keys failed. Last error:', lastError);
+    throw new Error('AI 서비스 연결에 실패했습니다. (모든 API 키 호출 실패)');
 }
 
 /**

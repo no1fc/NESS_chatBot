@@ -103,3 +103,52 @@ npm run build
 ## 📄 라이선스
 
 본 프로젝트의 소유권은 해당 개발 팀에 있으며, 무단 복제 및 배포를 금합니다.
+
+### 💰 1. 2026년 3월 기준 Gemini API 모델명 및 사용 요금표
+
+*모든 요금은 100만 **Token(토큰, 데이터 처리 기본 단위)** 당 **USD(유에스디, 미국 달러)** 기준입니다.*
+
+| 모델 종류 | API 호출 명칭 (실제 코드 입력용) | 텍스트 입력 (≤ 20만 토큰) | 텍스트 출력 (≤ 20만 토큰) | 텍스트 입력 (> 20만 토큰) | 텍스트 출력 (> 20만 토큰) |
+| --- | --- | --- | --- | --- | --- |
+| **Gemini 3.1 Pro Preview**<br>
+
+<br>(프로 프리뷰, 고성능 사전 공개판) | `gemini-3.1-pro-preview` | $2.00 | $12.00 | $4.00 | $18.00 |
+| **Gemini 3.1 Flash Preview**<br>
+
+<br>(플래시 프리뷰, 고속 사전 공개판) | `gemini-3.1-flash-preview` | $0.50 | $3.00 | 단일 요금 적용 | 단일 요금 적용 |
+| **Gemini 3.1 Flash-Lite Preview**<br>
+
+<br>(플래시 라이트 프리뷰, 초고속 경량 사전 공개판) | `gemini-3.1-flash-lite-preview` | $0.10 | $0.40 | 단일 요금 적용 | 단일 요금 적용 |
+| **Gemini 2.5 Pro**<br>
+
+<br>(프로, 고성능 주력 모델) | `gemini-2.5-pro` | $1.25 | $10.00 | $2.50 | $15.00 |
+| **Gemini 2.5 Flash**<br>
+
+<br>(플래시, 고속 가성비 모델) | `gemini-2.5-flash` | $0.30 | $2.50 | 단일 요금 적용 | 단일 요금 적용 |
+| **Gemini 2.5 Flash-Lite**<br>
+
+<br>(플래시 라이트, 초고속 경량 모델) | `gemini-2.5-flash-lite` | $0.10 | $0.40 | 단일 요금 적용 | 단일 요금 적용 |
+
+---
+
+### 🚦 2. 서비스 등급(Tier)별 API 호출 제한량 (Rate Limits)
+
+각 요금제 등급에 따라 분당 요청 수, 분당 토큰 수, 일일 요청 수가 다르게 적용됩니다.
+
+- **RPM (알피엠)**: Requests Per Minute (분당 최대 요청 횟수)
+- **TPM (티피엠)**: Tokens Per Minute (분당 최대 처리 토큰 수)
+- **RPD (알피디)**: Requests Per Day (일일 최대 요청 횟수)
+
+| 모델 종류 | Free Tier<br>
+
+<br>(프리 티어, 무료 제공 구간) | Tier 1<br>
+
+<br>(티어 원, 1단계 유료 결제 구간) | Tier 2<br>
+
+<br>(티어 투, 2단계 유료 결제 구간) |
+| --- | --- | --- | --- |
+| **Gemini 3.1 Pro Preview** | 5 RPM / 100K TPM / 100 RPD | 25 RPM / 1M TPM / 250 RPD | *(사전 공개판이므로 1단계와 유사하게 제한됨)* |
+| **Gemini 3.1 Flash Preview** | 10 RPM / 100K TPM / 250 RPD | 200 RPM / 1M TPM / 250 RPD | *(사전 공개판이므로 1단계와 유사하게 제한됨)* |
+| **Gemini 2.5 Pro** | 5 RPM / 250K TPM / 100 RPD | 150 RPM / 1M TPM / 1,500 RPD | 500 RPM / 2M TPM / 10,000 RPD |
+| **Gemini 2.5 Flash** | 10 RPM / 250K TPM / 250 RPD | 200 RPM / 1M TPM / 1,500 RPD | 1,000 RPM / 2M TPM / 10,000 RPD |
+| **Gemini 2.5 Flash-Lite** | 15 RPM / 250K TPM / 1,000 RPD | 300 RPM / 1M TPM / 1,500 RPD | 1,500 RPM / 2M TPM / 10,000 RPD |

@@ -21,6 +21,19 @@ export async function PUT(
             return NextResponse.json({ error: '유효하지 않은 관리자 ID입니다.' }, { status: 400 });
         }
 
+        // --- 1. 권한 체크 (쿠키 기반) ---
+        const { cookies } = await import('next/headers');
+        const token = (await cookies()).get('admin_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: '인증되지 않은 요청입니다.' }, { status: 401 });
+        }
+        const { verifyToken } = await import('@/lib/auth');
+        const payload = await verifyToken(token);
+        if (!payload || payload.role !== 'superadmin') {
+            return NextResponse.json({ error: '최고 관리자(Super Admin) 권한이 필요합니다.' }, { status: 403 });
+        }
+        // ---------------------------------
+
         const body = await request.json();
         const { password, role } = body;
 
@@ -67,6 +80,19 @@ export async function DELETE(
         if (isNaN(id)) {
             return NextResponse.json({ error: '유효하지 않은 관리자 ID입니다.' }, { status: 400 });
         }
+
+        // --- 1. 권한 체크 (쿠키 기반) ---
+        const { cookies } = await import('next/headers');
+        const token = (await cookies()).get('admin_session')?.value;
+        if (!token) {
+            return NextResponse.json({ error: '인증되지 않은 요청입니다.' }, { status: 401 });
+        }
+        const { verifyToken } = await import('@/lib/auth');
+        const payload = await verifyToken(token);
+        if (!payload || payload.role !== 'superadmin') {
+            return NextResponse.json({ error: '최고 관리자(Super Admin) 권한이 필요합니다.' }, { status: 403 });
+        }
+        // ---------------------------------
 
         // 최소 관리자 1명은 남겨두는 로직 등 추가적인 방어선이 있으면 좋지만 여기선 간단히 구현
         const success = deleteAdmin(id);
