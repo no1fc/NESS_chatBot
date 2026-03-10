@@ -1,18 +1,40 @@
 import { getBranchCount, getAdminCount, getSetting } from '@/lib/db';
-import { Database, Users, Cpu, Map as MapIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Database, Users } from 'lucide-react';
+import ApiTestCards from '@/components/admin/ApiTestCards';
 
 export default async function AdminDashboardPage() {
     const branchCount = getBranchCount();
     const adminCount = getAdminCount();
 
     // API Key 연결 상태 확인
-    const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiKeyDB = getSetting('gemini_api_keys');
+    let parsedGeminiKeys: string[] = [];
+    if (geminiKeyDB) {
+        try {
+            parsedGeminiKeys = JSON.parse(geminiKeyDB);
+        } catch (e) {
+            // Ignore parse error
+        }
+    }
+    const geminiKeyEnv = process.env.GEMINI_API_KEY;
+    const geminiKey = (parsedGeminiKeys.length > 0 ? parsedGeminiKeys[0] : null) || geminiKeyEnv;
     const isGeminiConnected = !!geminiKey && geminiKey.trim() !== '';
 
     // 카카오맵 키는 DB 설정 또는 환경변수 확인
-    const kakaoKeyDB = getSetting('KAKAO_MAP_API_KEY');
+    const kakaoKeyDB = getSetting('kakao_map_api_keys');
+    let parsedKakaoKeys: string[] = [];
+    if (kakaoKeyDB) {
+        try {
+            parsedKakaoKeys = JSON.parse(kakaoKeyDB);
+        } catch (e) {
+            // Ignore parse error
+        }
+    }
     const kakaoKeyEnv = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
-    const isKakaoConnected = !!(kakaoKeyDB || kakaoKeyEnv);
+    if (kakaoKeyEnv && parsedKakaoKeys.length === 0) {
+        parsedKakaoKeys.push(kakaoKeyEnv);
+    }
+    const isKakaoConnected = parsedKakaoKeys.length > 0;
 
     return (
         <div className="space-y-6">
@@ -50,37 +72,13 @@ export default async function AdminDashboardPage() {
                         <p className="text-3xl font-bold text-green-600">{adminCount}명</p>
                     </div>
 
-                    <div className={`border rounded-xl p-6 flex flex-col justify-between ${isGeminiConnected ? 'bg-purple-50 border-purple-100' : 'bg-red-50 border-red-100'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className={`${isGeminiConnected ? 'text-purple-800' : 'text-red-800'} font-medium`}>Gemini API</h3>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isGeminiConnected ? 'bg-purple-100 text-purple-600' : 'bg-red-100 text-red-600'}`}>
-                                <Cpu size={20} />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {isGeminiConnected ? (
-                                <><CheckCircle2 size={24} className="text-purple-600" /><span className="text-2xl font-bold text-purple-600">연결됨</span></>
-                            ) : (
-                                <><AlertCircle size={24} className="text-red-600" /><span className="text-2xl font-bold text-red-600">확인 필요</span></>
-                            )}
-                        </div>
-                    </div>
 
-                    <div className={`border rounded-xl p-6 flex flex-col justify-between ${isKakaoConnected ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className={`${isKakaoConnected ? 'text-amber-800' : 'text-red-800'} font-medium`}>Kakao MAP API</h3>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isKakaoConnected ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'}`}>
-                                <MapIcon size={20} />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {isKakaoConnected ? (
-                                <><CheckCircle2 size={24} className="text-amber-600" /><span className="text-2xl font-bold text-amber-600">연결됨</span></>
-                            ) : (
-                                <><AlertCircle size={24} className="text-red-600" /><span className="text-2xl font-bold text-red-600">확인 필요</span></>
-                            )}
-                        </div>
-                    </div>
+                    <ApiTestCards
+                        initialGeminiStatus={isGeminiConnected}
+                        initialKakaoStatus={isKakaoConnected}
+                        geminiKey={geminiKey || null}
+                        kakaoKeys={parsedKakaoKeys}
+                    />
                 </div>
             </div>
         </div>

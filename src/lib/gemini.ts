@@ -51,12 +51,15 @@ export async function generateResponse(
     for (let i = 0; i < keys.length; i++) {
         const apiKey = keys[i];
         try {
+            // 설정에서 모델명 불러오기 (기본값: gemini-1.5-flash)
+            const configuredModel = getSetting('gemini_model_name') || 'gemini-1.5-flash';
+
             // Google Generative AI 클라이언트 초기화
             const genAI = new GoogleGenerativeAI(apiKey);
 
             // 사용할 모델 선택 및 설정
             const model = genAI.getGenerativeModel({
-                model: 'gemini-flash-lite-latest',
+                model: configuredModel,
                 generationConfig: {
                     temperature: 0.1,
                     maxOutputTokens: useAnalysisModel ? 2048 : 1024,

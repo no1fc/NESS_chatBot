@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { KeyRound, Loader2, Save, Trash2, Plus, Cpu, Map as MapIcon } from 'lucide-react';
+import { KeyRound, Loader2, Save, Trash2, Plus, Cpu, Map as MapIcon, Calculator } from 'lucide-react';
 
 interface ApiGroupProps {
     title: string;
@@ -101,10 +101,23 @@ function ApiGroup({ title, description, settingKey, icon, keys, onAdd, onDelete 
     );
 }
 
+const GEMINI_PRICING: Record<string, { label: string, inputRate: number, outputRate: number }> = {
+    'gemini-3.1-pro-preview': { label: 'Gemini 3.1 Pro Preview', inputRate: 2.00, outputRate: 12.00 },
+    'gemini-3.1-flash-preview': { label: 'Gemini 3.1 Flash Preview', inputRate: 0.50, outputRate: 3.00 },
+    'gemini-3.1-flash-lite-preview': { label: 'Gemini 3.1 Flash-Lite Preview', inputRate: 0.25, outputRate: 1.50 },
+    'gemini-2.5-pro': { label: 'Gemini 2.5 Pro', inputRate: 1.25, outputRate: 10.00 },
+    'gemini-2.5-flash': { label: 'Gemini 2.5 Flash', inputRate: 0.30, outputRate: 2.50 },
+    'gemini-2.5-flash-lite': { label: 'Gemini 2.5 Flash-Lite', inputRate: 0.10, outputRate: 0.40 },
+};
+
 export default function ApiKeysSettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [geminiKeys, setGeminiKeys] = useState<string[]>([]);
     const [kakaoKeys, setKakaoKeys] = useState<string[]>([]);
+    const [geminiModel, setGeminiModel] = useState<string>('gemini-2.5-flash');
+    const [isSavingModel, setIsSavingModel] = useState(false);
+    const [inputTokens, setInputTokens] = useState<number>(1);
+    const [outputTokens, setOutputTokens] = useState<number>(1);
 
     useEffect(() => {
         fetchSettings();
@@ -130,11 +143,38 @@ export default function ApiKeysSettingsPage() {
 
                 setGeminiKeys(parseStringArray(data.settings.gemini_api_keys_masked));
                 setKakaoKeys(parseStringArray(data.settings.kakao_map_api_keys_masked));
+                if (data.settings.gemini_model_name) {
+                    setGeminiModel(data.settings.gemini_model_name);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch settings:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newModel = e.target.value;
+        setGeminiModel(newModel);
+        setIsSavingModel(true);
+
+        try {
+            const res = await fetch('/api/admin/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'gemini_model_name', value: newModel })
+            });
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.error || '모델 설정 저장 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('Model change error:', error);
+            alert('설정 저장 중 네트워크 오류가 발생했습니다.');
+        } finally {
+            setIsSavingModel(false);
         }
     };
 
@@ -198,6 +238,85 @@ export default function ApiKeysSettingsPage() {
             </div>
 
             <div className="mt-8">
+                {/* Gemini Model Selection & Cost Calculator */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                    <div className="p-6 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <div className="flex items-center gap-2 text-gray-800 font-bold text-lg mb-1">
+                                <Cpu className="text-blue-600" size={22} />
+                                Gemini 생성 모델 선택
+                            </div>
+                            <p className="text-gray-500 text-sm">기본적으로 사용할 Gemini AI 버전을 선택하고 비용을 예상해보세요.</p>
+                        </div>
+                        <div className="flex items-center">
+                            {isSavingModel && <span className="text-sm text-blue-600 mr-3 flex items-center"><Loader2 className="w-4 h-4 animate-spin mr-1" /> 저장 중...</span>}
+                            <select
+                                value={geminiModel}
+                                onChange={handleModelChange}
+                                disabled={isSavingModel}
+                                className="px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white font-medium cursor-pointer shadow-sm"
+                            >
+                                <option value="" disabled className="text-gray-400">모델을 선택하세요</option>
+                                {Object.entries(GEMINI_PRICING).map(([key, info]) => (
+                                    <option key={key} value={key}>{info.label}</option>
+                                ))}
+                                {/* 이전 모델 호환성 유지 */}
+                                {!Object.keys(GEMINI_PRICING).includes(geminiModel) && geminiModel !== '' && (
+                                    <option value={geminiModel}>{geminiModel} (레거시)</option>
+                                )}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Cost Calculator Section */}
+                    {GEMINI_PRICING[geminiModel] && (
+                        <div className="p-6 bg-white">
+                            <div className="flex items-center gap-2 text-gray-700 font-semibold mb-4">
+                                <Calculator className="text-emerald-500" size={18} />
+                                예상 비용 계산기 (100만 토큰 기준 단가적용)
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">예상 월별 입력 (백만 토큰)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.1"
+                                            value={inputTokens}
+                                            onChange={(e) => setInputTokens(parseFloat(e.target.value) || 0)}
+                                            className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">M</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">단가: ${GEMINI_PRICING[geminiModel].inputRate.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">예상 월별 출력 (백만 토큰)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.1"
+                                            value={outputTokens}
+                                            onChange={(e) => setOutputTokens(parseFloat(e.target.value) || 0)}
+                                            className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-black"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">M</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">단가: ${GEMINI_PRICING[geminiModel].outputRate.toFixed(2)}</p>
+                                </div>
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 flex flex-col justify-center items-center">
+                                    <span className="text-sm font-medium text-emerald-800 mb-1">월별 예상 환산 금액</span>
+                                    <span className="text-2xl font-bold text-emerald-600">
+                                        ${((inputTokens * GEMINI_PRICING[geminiModel].inputRate) + (outputTokens * GEMINI_PRICING[geminiModel].outputRate)).toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <ApiGroup
                     title="Google Gemini API (AI)"
                     description="NESS 챗봇 구동 및 AI 텍스트 생성에 사용되는 구글 제미나이 API Key 배열입니다."

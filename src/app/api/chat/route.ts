@@ -146,7 +146,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (currentStep === 0) {
             // 거주 지역 묻기 (하드코딩 - 동적 수정 불가능해야 하는 필수 항목)
             return NextResponse.json({
-                message: '1. 거주 지역 확인\n가까운 잡모아 지점을 안내해 드리기 위해 거주하시는 지역을 선택해주세요.',
+                message: '거주 지역 확인\n가까운 잡모아 지점을 안내해 드리기 위해 거주하시는 지역을 선택해주세요.',
                 choices: [],
                 phase: 'questioning',
                 currentStep: 1,

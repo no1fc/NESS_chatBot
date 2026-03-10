@@ -116,7 +116,7 @@ export default function RegionSelector({ onSelect, disabled }: RegionSelectorPro
                     `}
                 >
                     <Search size={18} />
-                    지점 찾기
+                    거주 지역 등록
                 </button>
             </div>
         </div>

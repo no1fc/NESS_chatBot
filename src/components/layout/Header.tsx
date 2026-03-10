@@ -39,11 +39,13 @@ export default function Header() {
 
                 <div className="flex items-center gap-3 md:gap-6">
                     <div className="hidden sm:flex flex-col items-end">
-                        <span className="text-white/20 text-[9px] font-black uppercase tracking-[0.2em]">Partner</span>
+                        <span className="text-white/20 text-[9px] font-black uppercase tracking-[0.2em]">Company</span>
                         <span className="text-white/60 text-[10px] font-bold">잡모아 국민취업지원제도</span>
                     </div>
                     <div className="w-10 h-10 rounded-2xl bg-white border border-white/10 flex items-center justify-center overflow-hidden">
-                        <img src="/JobmoaLogo.svg" alt="JobmoaLogo" className="w-8 h-8 object-contain opacity-100" />
+                        <a href="http://www.jobmoa.com/" target="_blank" rel="noopener noreferrer">
+                            <img src="/JobmoaLogo.svg" alt="JobmoaLogo" className="w-8 h-8 object-contain opacity-100" />
+                        </a>
                     </div>
                 </div>
             </div>
