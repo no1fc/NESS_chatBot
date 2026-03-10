@@ -97,21 +97,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // 수집된 QA 데이터로 최종 유형 판별
         if (phase === 'analyzing') {
             // DB에서 커스텀 시스템 프롬프트 로드
-            const { getSetting } = await import('@/lib/db');
+            const { getSetting, logApiUsage } = await import('@/lib/db');
             const customSystemPrompt = getSetting('system_prompt');
 
             // 분석 프롬프트 생성 (규정 + 사용자 답변 결합)
             const analysisPrompt = buildAnalysisPrompt(userAnswers, customSystemPrompt);
 
             // Gemini API 호출 (분석 모델 사용)
-            const rawResponse = await generateResponse(
+            const aiResponse = await generateResponse(
                 analysisPrompt,
                 '위 데이터를 바탕으로 국민취업지원제도 참여 유형을 JSON 형식으로 판별해주세요.',
                 true // 분석 모델 사용
             );
 
             // JSON 파싱
-            const analysisResult = safeParseJSON<ChatResponse['result'] & { phase: string }>(rawResponse);
+            const analysisResult = safeParseJSON<ChatResponse['result'] & { phase: string }>(aiResponse.text);
+
+            // DB에 사용량 로깅
+            if (analysisResult) {
+                logApiUsage(
+                    aiResponse.modelName,
+                    aiResponse.usageMetadata?.promptTokenCount || 0,
+                    aiResponse.usageMetadata?.candidatesTokenCount || 0,
+                    aiResponse.usageMetadata?.totalTokenCount || 0,
+                    analysisResult.type || 'unknown'
+                );
+            }
 
             if (!analysisResult) {
                 // 파싱 실패 시 기본 오류 응답

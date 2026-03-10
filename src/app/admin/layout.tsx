@@ -8,16 +8,17 @@ import {
     Users,
     KeyRound,
     MessageSquareText,
-    FileText,
     LogOut,
     Menu,
     X,
     LayoutDashboard,
-    Lock
+    Lock,
+    BarChart3
 } from 'lucide-react';
 
 const SIDEBAR_ITEMS = [
     { name: '대시보드', href: '/admin', icon: LayoutDashboard, requiresSuperAdmin: false },
+    { name: '사용량 통계', href: '/admin/usage', icon: BarChart3, requiresSuperAdmin: false },
     { name: '지점 등록', href: '/admin/branches', icon: Building2, requiresSuperAdmin: false },
     { name: '관리자 지정', href: '/admin/users', icon: Users, requiresSuperAdmin: true },
     { name: 'API 설정', href: '/admin/settings/api-keys', icon: KeyRound, requiresSuperAdmin: false },

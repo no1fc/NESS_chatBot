@@ -9,19 +9,29 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 
 import { getSetting } from '@/lib/db';
 
+export interface GeminiResponse {
+    text: string;
+    usageMetadata: {
+        promptTokenCount: number;
+        candidatesTokenCount: number;
+        totalTokenCount: number;
+    } | null;
+    modelName: string;
+}
+
 /**
  * Gemini 모델에 메시지를 전송하고 응답을 받는 함수
  * 429 Rate Limit 발생 시 30초 대기 후 1회 재시도
  * @param systemPrompt - AI의 역할과 제약을 정의하는 시스템 프롬프트
  * @param userMessage - 사용자 메시지 또는 분석 요청
  * @param useAnalysisModel - true이면 분석용 모델 사용 (기본: 일반 챗 모델)
- * @returns 파싱된 JSON 객체 또는 원시 텍스트 응답
+ * @returns 텍스트 응답, 토큰 사용량, 모델 이름이 포함된 객체
  */
 export async function generateResponse(
     systemPrompt: string,
     userMessage: string,
     useAnalysisModel: boolean = false
-): Promise<string> {
+): Promise<GeminiResponse> {
     const keysRaw = getSetting('gemini_api_keys');
     let keys: string[] = [];
     if (keysRaw) {
@@ -51,8 +61,8 @@ export async function generateResponse(
     for (let i = 0; i < keys.length; i++) {
         const apiKey = keys[i];
         try {
-            // 설정에서 모델명 불러오기 (기본값: gemini-1.5-flash)
-            const configuredModel = getSetting('gemini_model_name') || 'gemini-1.5-flash';
+            // 설정에서 모델명 불러오기 (기본값: gemini-2.5-flash)
+            const configuredModel = getSetting('gemini_model_name') || 'gemini-2.5-flash';
 
             // Google Generative AI 클라이언트 초기화
             const genAI = new GoogleGenerativeAI(apiKey);
@@ -70,7 +80,15 @@ export async function generateResponse(
             // Gemini API 호출
             const result = await model.generateContent(fullPrompt);
             const response = result.response;
-            return response.text();
+            return {
+                text: response.text(),
+                usageMetadata: response.usageMetadata ? {
+                    promptTokenCount: response.usageMetadata.promptTokenCount,
+                    candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                    totalTokenCount: response.usageMetadata.totalTokenCount,
+                } : null,
+                modelName: configuredModel
+            };
 
         } catch (error: any) {
             lastError = error;

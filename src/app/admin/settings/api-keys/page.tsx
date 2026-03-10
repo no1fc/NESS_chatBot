@@ -103,8 +103,8 @@ function ApiGroup({ title, description, settingKey, icon, keys, onAdd, onDelete 
 
 const GEMINI_PRICING: Record<string, { label: string, inputRate: number, outputRate: number }> = {
     'gemini-3.1-pro-preview': { label: 'Gemini 3.1 Pro Preview', inputRate: 2.00, outputRate: 12.00 },
-    'gemini-3.1-flash-preview': { label: 'Gemini 3.1 Flash Preview', inputRate: 0.50, outputRate: 3.00 },
     'gemini-3.1-flash-lite-preview': { label: 'Gemini 3.1 Flash-Lite Preview', inputRate: 0.25, outputRate: 1.50 },
+    'gemini-3-flash-preview': { label: 'Gemini 3 Flash Preview', inputRate: 0.50, outputRate: 3.00 },
     'gemini-2.5-pro': { label: 'Gemini 2.5 Pro', inputRate: 1.25, outputRate: 10.00 },
     'gemini-2.5-flash': { label: 'Gemini 2.5 Flash', inputRate: 0.30, outputRate: 2.50 },
     'gemini-2.5-flash-lite': { label: 'Gemini 2.5 Flash-Lite', inputRate: 0.10, outputRate: 0.40 },

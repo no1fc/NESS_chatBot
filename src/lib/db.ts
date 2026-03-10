@@ -132,6 +132,19 @@ function initSchema(database: Database.Database): void {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+    // 4. API 사용량 로그 테이블 생성 (Phase 4)
+    database.exec(`
+    CREATE TABLE IF NOT EXISTS api_usage_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      model_name TEXT NOT NULL,
+      input_tokens INTEGER DEFAULT 0,
+      output_tokens INTEGER DEFAULT 0,
+      total_tokens INTEGER DEFAULT 0,
+      result_type TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 }
 
 /**
@@ -337,4 +350,81 @@ export function updateSetting(key: string, value: string): boolean {
     `);
     const result = stmt.run(key, value);
     return result.changes > 0;
+}
+
+// ==========================================
+// API Usage Logs (Phase 4)
+// ==========================================
+
+export interface ApiUsageLog {
+    id: number;
+    model_name: string;
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    result_type: string | null;
+    created_at: string;
+}
+
+/**
+ * API 호출 결과를 DB에 로깅합니다.
+ */
+export function logApiUsage(
+    model_name: string,
+    input_tokens: number,
+    output_tokens: number,
+    total_tokens: number,
+    result_type: string | null
+): boolean {
+    try {
+        const database = getDB();
+        const stmt = database.prepare(`
+            INSERT INTO api_usage_logs (model_name, input_tokens, output_tokens, total_tokens, result_type)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(model_name, input_tokens, output_tokens, total_tokens, result_type);
+        return result.changes > 0;
+    } catch (error) {
+        console.error('API Usage 로깅 에러:', error);
+        return false;
+    }
+}
+
+/**
+ * 기간별 / 모델별 통계 집계를 반환합니다.
+ * @param period 'day' | 'month' | 'year' (집계 단위)
+ * @param dateFilter YYYY-MM-DD 또는 YYYY-MM 또는 YYYY 형식의 필터 문자열 (선택)
+ */
+export function getApiUsageStats(period: 'day' | 'month' | 'year' = 'day', dateFilter?: string): any[] {
+    const database = getDB();
+
+    let dateModifier = '%Y-%m-%d';
+    if (period === 'month') dateModifier = '%Y-%m';
+    if (period === 'year') dateModifier = '%Y';
+
+    let condition = '';
+    const params: any[] = [];
+
+    // dateFilter가 제공되면 문자열 매칭(LIKE) 패턴이나 정확한 패턴으로 검색
+    if (dateFilter) {
+        condition = `WHERE strftime('%Y-%m-%d', created_at) LIKE ?`;
+        params.push(`${dateFilter}%`);
+    }
+
+    const query = `
+        SELECT 
+            strftime('${dateModifier}', created_at) as log_date,
+            model_name,
+            SUM(input_tokens) as total_input_tokens,
+            SUM(output_tokens) as total_output_tokens,
+            SUM(total_tokens) as total_tokens_used,
+            COUNT(*) as request_count
+        FROM api_usage_logs
+        ${condition}
+        GROUP BY log_date, model_name
+        ORDER BY log_date DESC, model_name ASC
+    `;
+
+    const stmt = database.prepare(query);
+    return stmt.all(...params);
 }
