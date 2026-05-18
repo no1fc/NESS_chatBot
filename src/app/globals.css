@@ -1,0 +1,204 @@
+/**
+ * Global CSS — NESS Design System
+ * Based on DESIGN.md (opencode.ai inspired)
+ * Warm dark, flat, monospace-first aesthetic
+ */
+
+@import "tailwindcss";
+
+/* ====================================
+   Design Tokens (DESIGN.md)
+ ==================================== */
+@theme {
+  /* Background */
+  --color-bg: #201d1d;
+  --color-bg-elevated: #302c2c;
+  --color-input-bg: #302c2c;
+
+  /* Text */
+  --color-text: #fdfcfc;
+  --color-text-secondary: #9a9898;
+  --color-text-muted: #6e6e73;
+  --color-text-dark: #424245;
+
+  /* Accent */
+  --color-accent: #007aff;
+  --color-accent-hover: #0056b3;
+  --color-accent-active: #004085;
+
+  /* Semantic */
+  --color-danger: #ff3b30;
+  --color-danger-hover: #d70015;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-warning-hover: #cc7f08;
+
+  /* Border */
+  --color-border: rgba(15, 0, 0, 0.12);
+  --color-border-strong: #646262;
+  --color-border-tab: #9a9898;
+
+  /* Radius */
+  --radius-default: 4px;
+  --radius-input: 6px;
+
+  /* Font */
+  --font-mono: 'Berkeley Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-sans: 'Pretendard Variable', 'Pretendard', var(--font-mono);
+
+  /* Animation */
+  --animate-reveal-up: reveal-up 0.2s ease-out forwards;
+}
+
+:root {
+  --color-bg: #201d1d;
+  --color-bg-elevated: #302c2c;
+  --color-accent: #007aff;
+  --color-border: rgba(15, 0, 0, 0.12);
+}
+
+/* ====================================
+   Base Styles
+ ==================================== */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  background: var(--color-bg);
+}
+
+body {
+  font-family: var(--font-mono);
+  color: #fdfcfc;
+  background: var(--color-bg);
+  line-height: 1.5;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ====================================
+   Animations (minimal)
+ ==================================== */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes flow-gradient {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ====================================
+   Utility Classes
+ ==================================== */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.15s ease-out forwards;
+  }
+
+  .animate-flow-gradient {
+    animation: flow-gradient 1.5s ease-in-out infinite;
+  }
+
+  .wide-container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .wide-container {
+      padding: 0 4rem;
+    }
+  }
+
+  .chat-container-width {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+/* ====================================
+   Scrollbar
+ ==================================== */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #646262;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9a9898;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* ====================================
+   Landing Page Enhancements
+ ==================================== */
+.hero-glow {
+  position: relative;
+}
+.hero-glow::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: -5%;
+  width: 50%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(0, 122, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(253, 252, 252, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(253, 252, 252, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+}

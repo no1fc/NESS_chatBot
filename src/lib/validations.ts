@@ -1,0 +1,96 @@
+/**
+ * Zod 입력 검증 스키마 모음
+ * 모든 admin API 라우트에서 요청 바디 검증에 사용
+ */
+
+import { z } from 'zod';
+
+// ==========================================
+// Branches
+// ==========================================
+
+export const createBranchSchema = z.object({
+    region_sido: z.string().min(1, '시/도를 입력해주세요.').max(50),
+    region_sigungu: z.string().min(1, '시/군/구를 입력해주세요.').max(50),
+    branch_name: z.string().min(1, '지점명을 입력해주세요.').max(100),
+    address: z.string().min(1, '주소를 입력해주세요.').max(255),
+    phone: z.string().min(1, '전화번호를 입력해주세요.').max(50),
+    specific_url: z.string().min(1, 'URL을 입력해주세요.').max(500),
+    latitude: z.union([z.number(), z.string().transform(Number)]).optional(),
+    longitude: z.union([z.number(), z.string().transform(Number)]).optional(),
+    covered_regions: z.string().max(10000).optional().default('[]'),
+});
+
+export const updateBranchSchema = z.object({
+    region_sido: z.string().min(1).max(50).optional(),
+    region_sigungu: z.string().min(1).max(50).optional(),
+    branch_name: z.string().min(1).max(100).optional(),
+    address: z.string().min(1).max(255).optional(),
+    phone: z.string().min(1).max(50).optional(),
+    specific_url: z.string().min(1).max(500).optional(),
+    latitude: z.union([z.number(), z.string().transform(Number), z.null().transform(() => undefined)]).optional(),
+    longitude: z.union([z.number(), z.string().transform(Number), z.null().transform(() => undefined)]).optional(),
+    covered_regions: z.string().max(10000).optional(),
+});
+
+// ==========================================
+// Admin Users
+// ==========================================
+
+export const createAdminSchema = z.object({
+    username: z.string().min(3, '아이디는 3자 이상이어야 합니다.').max(100),
+    password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다.').max(200),
+    role: z.enum(['admin', 'superadmin']).optional().default('admin'),
+});
+
+export const updateAdminSchema = z.object({
+    password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다.').max(200).optional(),
+    role: z.enum(['admin', 'superadmin']).optional(),
+}).refine(data => data.password || data.role, {
+    message: '변경할 정보(비밀번호 또는 권한)를 입력해주세요.',
+});
+
+// ==========================================
+// Login
+// ==========================================
+
+export const loginSchema = z.object({
+    id: z.string().min(1, '아이디를 입력해주세요.').max(100),
+    password: z.string().min(1, '비밀번호를 입력해주세요.').max(200),
+});
+
+// ==========================================
+// Settings
+// ==========================================
+
+export const updateSettingSchema = z.object({
+    key: z.string().min(1, '키가 유효하지 않습니다.').max(255),
+    value: z.string().optional(),
+    action: z.enum(['add', 'delete']).optional(),
+    index: z.number().int().min(0).optional(),
+});
+
+// ==========================================
+// Chat
+// ==========================================
+
+export const chatRequestSchema = z.object({
+    messages: z.array(z.object({
+        role: z.enum(['user', 'model']),
+        content: z.string(),
+    })).optional().default([]),
+    phase: z.enum(['intro', 'info', 'questioning', 'analyzing', 'location', 'result', 'ended']),
+    userAnswers: z.record(z.string(), z.string()).optional().default({}),
+    currentStep: z.number().int().min(0).optional().default(0),
+});
+
+// ==========================================
+// 유틸리티
+// ==========================================
+
+/**
+ * Zod 파싱 결과를 NextResponse 에러로 변환하는 헬퍼
+ */
+export function formatZodError(error: z.ZodError<unknown>): string {
+    return error.issues.map(e => e.message).join(', ');
+}
